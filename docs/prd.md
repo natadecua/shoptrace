@@ -148,6 +148,7 @@ Walk-in, repeat PMS customer, enthusiast, repair customer, or prospective visito
 7. **Local-shop realistic.** Fit PH workflows: walk-ins, Messenger, GCash, bank transfer, paper backup, unstable internet, affordable Android tablets, Taglish-speaking users.
 8. **Buildable first, expandable later.** Start with job tracking, proof, approvals, notifications, and reminders before full inventory/accounting automation.
 9. **Proof you can trust.** If "proof" is the brand promise, the integrity of that proof must be designed for, not assumed (Section 19).
+10. **A no-brainer to adopt (KISS).** A shop must be able to sign up and create its first real work order in minutes, with zero configuration, on sensible defaults. Complexity is opt-in: every advanced capability ships behind a toggle that is hidden until switched on, so the app is "stupid simple by default, powerful when you need it" (Section 33).
 
 ---
 
@@ -162,6 +163,8 @@ Seven major surfaces:
 5. Customer Tracking Portal
 6. Notifications & Communication
 7. Retention, Promos, and Reporting Tools
+
+All seven surfaces sit on top of a per-tenant configuration layer (sign-up, onboarding wizard, branding, and feature toggles) that makes the product self-serve and white-label — see Section 33.
 
 ---
 
@@ -1260,11 +1263,13 @@ A service-transparency and work-order platform for independent auto shops.
 | Customer portal | Next.js (App Router) |
 | Mechanic app | Vite React PWA |
 | Database | Supabase PostgreSQL |
-| Auth | Supabase Auth |
+| Auth | Supabase Auth (JWT carries `tenant_id` + `role` claims) |
+| Tenant isolation | **Postgres Row Level Security (RLS)** keyed on the JWT `tenant_id` claim — primary mechanism |
+| Runtime queries | `supabase-js` (RLS-aware) for app reads/writes |
+| Schema & migrations | Prisma (`prisma migrate`) — migrations only, not the runtime query layer |
 | Storage (dev/MVP) | Supabase Storage |
-| Storage (production / scale) | Cloudflare R2 |
-| Realtime | Supabase Realtime (queue board, upload status) |
-| ORM | Prisma |
+| Storage (production / scale) | Cloudflare R2 (tenant-prefixed paths + signed URLs) |
+| Realtime | Supabase Realtime (queue board, upload status — RLS-respecting) |
 | Reports | SQL views on PostgreSQL |
 | Styling | Tailwind CSS + shadcn/ui |
 | Notifications (MVP) | Semaphore or Movider (PH SMS) + copy-to-Messenger |
@@ -1272,7 +1277,16 @@ A service-transparency and work-order platform for independent auto shops.
 | Payments (customer) | Manual in v1 (GCash/bank) — no gateway |
 | Payments (SaaS billing) | PayMongo / Xendit (added when SaaS launches) |
 
-**All tables include `tenant_id` from day one.** Tenant isolation enforced at the application layer (Prisma filters every query by `tenant_id`). Row Level Security in Supabase can be added as a secondary defense layer but is not the primary isolation mechanism in v1 (avoids Prisma/RLS complexity during single-tenant development).
+**Multi-tenancy model (committed): RLS-first.** All tables include `tenant_id` from day one. Tenant isolation is enforced primarily by **Postgres Row Level Security**, not by application code. The database itself refuses to return another tenant's rows regardless of an application bug — which is the right guarantee for a trust-based product where a single missed filter would be a cross-tenant data leak.
+
+How it fits together:
+
+- **Identity:** Supabase Auth issues the session JWT. Each user's `tenant_id` and `role` are stamped into the JWT as custom claims (set via an auth hook / `app_metadata` on signup). This resolves the earlier Supabase-Auth-vs-Prisma identity conflict: Supabase Auth owns identity; Prisma is used only for schema and migrations, never as the runtime query layer.
+- **Policies:** Every tenant-scoped table has an RLS policy of the form `tenant_id = (auth.jwt() ->> 'tenant_id')::uuid`, plus role-aware policies for finer control (e.g., a mechanic can only `select`/`update` work orders they are assigned to). Customer-portal reads do not use Supabase Auth at all — they go through a token-validating server route (Section 13.2, 27.5) that scopes the query explicitly.
+- **Queries:** App code reads/writes through `supabase-js`, so RLS is always in force. There is no privileged-role bypass path exposed to request handlers. Admin/back-office jobs that legitimately need to cross tenants (support tooling, cron) use the service role behind a server-only boundary, never in user-facing request paths.
+- **Storage:** Photos live under tenant-prefixed paths (`/{tenant_id}/{work_order_id}/...`). R2 has no RLS, so access is gated by issuing short-lived signed URLs from a server route that has already passed the RLS/token check.
+
+This is the elegant, low-effort strong-isolation pattern Supabase is built for, and it scales on a shared schema to hundreds of shops before schema-per-tenant or database-per-tenant would even be a conversation.
 
 ### 27.2 Offline Sync Risk
 
@@ -1282,7 +1296,9 @@ A service-transparency and work-order platform for independent auto shops.
 - Cheap-tablet local storage limits
 - Two mechanics editing the same job simultaneously
 
-**Scope offline to photos + checklist-state only** in early phases, with last-write-wins for checklist state and server-side photo deduplication. Defer full offline work-order editing to a later phase.
+**Scope offline to photos + checklist-state only** in early phases, with last-write-wins for checklist state and server-side photo deduplication. Defer full offline work-order editing to a later phase. This mirrors the only Odoo surface that works offline (POS): they made the *append-mostly, low-conflict* path offline and kept the editable/financial back-office online-only. We draw the same boundary.
+
+**Offline storage security.** Browser `localStorage`/`IndexedDB` is **plaintext on the device** — it is not an encrypted vault. Isolation comes from same-origin policy and transport (HTTPS) on sync, not from the storage layer. Because the mechanic tablet is shared and may cache customer PII (name, plate, photos), the controls are: cache only what the current job needs, **purge the local cache after a successful sync**, per-job PIN re-auth (Section 27.5), full-disk encryption on the tablets, strict XSS prevention, and an append-only upload queue with a visible "N items not yet synced" indicator so nothing is silently lost. Implement the queue with a service worker + IndexedDB + the Background Sync API.
 
 ### 27.3 Customer Portal Uptime
 
@@ -1299,10 +1315,12 @@ Schema migrations via Prisma Migrate:
 
 | Actor | Method |
 |-------|--------|
-| Owner / Manager / Admin / Cashier | Email + password via Supabase Auth; 2FA on owner/cashier |
-| Mechanics on shared tablets | Individual mechanic accounts; tablet stays logged into the mechanic surface; PIN re-auth on each job start |
-| New staff onboarding | Email invite link via Supabase Auth invite flow |
-| Customer portal | Token-based (no Supabase Auth); optional PIN as second factor (Section 13.2) |
+| Owner / Manager / Admin / Cashier | Email + password via Supabase Auth; `tenant_id` + `role` in JWT claims; 2FA on owner/cashier |
+| Mechanics on shared tablets | Individual mechanic accounts; tablet stays logged into the mechanic surface; PIN re-auth on each job start; offline cache purged after sync (Section 27.2) |
+| New staff onboarding | Email invite link via Supabase Auth invite flow; invited user is auto-stamped with the inviting shop's `tenant_id` |
+| Customer portal | Token-based, **no Supabase Auth and no JWT** — a server route validates the token (+ optional PIN, Section 13.2) and scopes every query to that single work order explicitly, since there is no tenant JWT to drive RLS |
+
+> **Auth/identity decision (resolved):** Supabase Auth is the single source of truth for staff identity. Prisma is used only for migrations. RLS reads the JWT claims for tenant isolation. There is no second identity store to keep in sync.
 
 ---
 
@@ -1473,6 +1491,88 @@ Prove the system can make a real shop job transparent from intake to release —
 
 ---
 
+## 33. Onboarding, Branding & Feature Configuration
+
+This section makes Product Principle #10 concrete. The product must feel like a no-brainer: a shop signs up and is *running* in minutes on good defaults, brands it as their own, and switches on advanced features only when they want them. Every capability is multi-tenant config (a row scoped by `tenant_id`, enforced by RLS — Section 27.1).
+
+### 33.1 Design Philosophy — Three Rules
+
+1. **Works in 5 minutes, configure later.** Nothing in setup blocks a shop from creating its first real work order. Every wizard step is skippable with "Set up later."
+2. **Sensible defaults over choices.** The shop never starts from a blank slate. Services, checklist/photo templates, notification copy, queue bands, and roles all ship pre-filled with good defaults the shop can edit — not design from scratch.
+3. **Progressive disclosure.** The app is stupid-simple by default. Advanced features are hidden entirely (not greyed out, not cluttering menus) until toggled on. Turning a feature off removes its UI completely.
+
+### 33.2 Sign-Up
+
+Minimal friction to get an account:
+
+- Email + password (or magic link) + shop name. That's it.
+- Account creation provisions the tenant: a `Tenant` row, the first user as **Owner**, the JWT stamped with the new `tenant_id`, and the default seed data (33.4) created in one transaction.
+- No credit card, no plan selection at sign-up (billing is a later, separate step for the SaaS phase).
+
+### 33.3 First-Run Onboarding Wizard
+
+A short, skippable wizard. Each step writes immediately, so a shop that quits halfway still keeps what it entered.
+
+| Step | What it asks | What it does | Skippable? |
+|------|-------------|--------------|-----------|
+| 1. Shop basics | Name, address, phone, hours | Pre-filled with sensible defaults (e.g., Mon–Sat 8–6) | Yes |
+| 2. Branding | Upload logo, pick a brand color | Logo stored per-tenant; brand color **auto-extracted from the logo** as a suggestion (editable). Instantly themes the whole app + customer portal (33.5) | Yes — falls back to AutoLounge default theme |
+| 3. Your services | Checkbox the services you offer (the 11 categories, Section 8.2) | **Seeds the matching default checklist + photo templates** for each selected service (33.4). This is the key "ready to use" moment | Yes — defaults to PMS + General Repair |
+| 4. Your team | Invite mechanics/staff by email (optional) | Sends Supabase Auth invites auto-stamped with this `tenant_id`; assigns roles | Yes — owner can work solo and invite later |
+| 5. Done | — | Lands on the queue board with a **"Create your first work order"** prompt and a deletable sample work order to explore | — |
+
+The wizard is re-openable any time from Settings, and a persistent (dismissible) setup checklist tracks completion ("Add your logo · Pick your services · Invite your team") so shops can finish at their own pace.
+
+### 33.4 Ready-to-Use Defaults (the "just works" layer)
+
+Created automatically at sign-up / service selection so the shop never configures from zero:
+
+- **Checklist + photo templates** per selected service (PMS, brakes, diagnostics, etc.) using the examples in Section 12.5 — including the required-photo set (D4). Editable later via template management (Section 12.7).
+- **Notification templates** in English + Taglish, pre-filled (Section 14.1, 25).
+- **Queue status bands** with default thresholds (Section 9.2).
+- **Roles** with the default permission matrix (Section 21.2).
+- **A sample work order** to click through and then delete.
+
+### 33.5 Branding / White-Label (per tenant)
+
+Each shop's brand is applied across every surface so it feels like *their* app, not AutoLounge's — which is also the foundation of the SaaS white-label story.
+
+- **Inputs:** logo (stored per-tenant), primary brand color (picker or auto-derived from logo), optional light/dark preference.
+- **Applied to:** admin app header/accent, the **customer tracking portal**, the **printable job order**, notification message headers, and the public website/queue page.
+- **Customer-facing priority:** the tracking portal and public pages carry the shop's logo and color prominently — the customer should feel they're looking at *their mechanic's* system.
+- Implemented as CSS custom properties driven by a per-tenant theme config row; no rebuild per shop.
+
+### 33.6 Feature Toggles (opt-in complexity)
+
+A **Features** settings page where the shop turns capabilities on/off. The product can run as a dead-simple digital job-order book on day one, then grow. When a feature is **off, its UI is hidden entirely** — menus, buttons, and fields disappear so nothing adds clutter.
+
+| Feature | Default | When off… |
+|---------|---------|-----------|
+| **Proof photo recorder** (the "image recorder") | On | App becomes a pure work-order + queue + billing tracker with no camera/photo UI anywhere |
+| Required-photo enforcement (gate vs optional) | On | Photos allowed but never block "mark job done" |
+| Customer tracking portal | On | No tracking links generated; purely internal tool |
+| Public queue / availability page | Off | No public page published |
+| PMS reminders | On | Reminder queue hidden |
+| Estimates & added-work approvals | On | Simple final-bill only, no approval loop |
+| Payment proof upload & verification | On | Payment tracked as a simple status only |
+| Promos & discounts | Off | Discount/promo UI hidden |
+| Auto supply catalog | Off | Catalog pages hidden |
+| Works gallery | Off | Gallery hidden |
+| Multi-mechanic assignment | Off | Single assignee per job |
+| Multi-branch | Off | Single location (P3) |
+
+**Toggle principles:**
+- Toggles are per-tenant config, RLS-scoped.
+- Turning a feature on reveals its UI and seeds any defaults it needs (e.g., enabling promos creates an empty promo list).
+- Turning a feature off **hides** the UI but **preserves data** — re-enabling restores it. Nothing is destroyed by a toggle.
+- A few **starter presets** make this one click: e.g., *"Simple"* (work orders + queue + billing only), *"Standard"* (adds photos + tracking + reminders), *"Full"* (everything on). A shop picks a preset in the wizard and fine-tunes later.
+
+### 33.7 Why This Matters for SaaS
+
+Onboarding wizard + per-tenant defaults + theming + feature toggles are exactly what turns the bespoke AutoLounge build into a self-serve SaaS later (D1) with no rewrite: a new shop self-provisions, brands itself, and dials in complexity — all without engineering involvement.
+
+---
+
 ## Changelog
 
 ### v1 → v2 (internal revision)
@@ -1507,5 +1607,14 @@ Prove the system can make a real shop job transparent from intake to release —
 - Added Section 27.4 — migration workflow (Prisma Migrate + local Supabase dev environment)
 - Added Section 27.5 — authentication strategy for all actor types including shared mechanic tablets
 - Tenant isolation: documented as application-layer (`tenant_id` on all Prisma queries), with RLS as optional secondary defense; avoids Prisma/RLS incompatibility complexity in v1
+
+### v1.0 → v1.1 (architecture commitment + KISS onboarding)
+
+- **Multi-tenancy committed to RLS-first (Option A):** Postgres Row Level Security keyed on a `tenant_id` JWT claim is now the *primary* isolation mechanism, replacing the earlier app-layer-filtering approach. Supabase Auth owns identity; Prisma is migrations-only; runtime queries go through `supabase-js` so RLS is always in force (Section 27.1)
+- **Resolved the Supabase-Auth-vs-Prisma identity conflict** — single source of truth for staff identity; customer portal stays token-based with explicit query scoping (Section 27.5)
+- **Storage isolation** spelled out — tenant-prefixed R2 paths + signed URLs (Section 27.1)
+- **Offline storage security** added to Section 27.2 (browser storage is plaintext; purge-after-sync, PIN re-auth, disk encryption, append-only sync queue) — informed by how Odoo POS scopes its offline surface
+- **Added Product Principle #10 (KISS / no-brainer adoption)** — Section 6
+- **Added Section 33 — Onboarding, Branding & Feature Configuration:** minimal sign-up, skippable first-run wizard, ready-to-use seeded defaults, per-tenant logo/theme white-labeling, and opt-in feature toggles (including the proof-photo "image recorder" as a togglable module) with Simple/Standard/Full presets
 - Storage: documented Cloudflare R2 as production target (zero egress) vs Supabase Storage for dev/MVP
 - v1 service categories, full status enumerations (13 statuses), and role permission detail restored from v1 draft
