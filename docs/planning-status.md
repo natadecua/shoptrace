@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-06-02  
 **Phase:** Planning → about to enter build (P0 spike)  
-**Authoritative docs:** `docs/prd.md` (v1.5) · `docs/website-prd.md` · `docs/design-prompts.md`  
+**Authoritative docs:** `docs/prd.md` (v1.6) · `docs/website-prd.md` · `docs/design-prompts.md` · `docs/consumer-app-prd.md` (parked)  
 **Naming:** *ShopTrace* = the product/platform · *AutoLounge* = the pilot/example shop (tenant #1)
 
 ---
@@ -30,7 +30,7 @@ Planning is essentially complete at the product and architecture level. The PRD 
 | Domains | Default `{shop}.shoptrace.app` auto at signup; **custom domain = paid add-on** (Vercel Domains API / Cloudflare for SaaS) | PRD §33.8 |
 | Product naming | **ShopTrace** = platform; AutoLounge = pilot/example shop | PRD header, §1 |
 | Booking + customer media | Added as **P2** (booking ≠ walk-in queue; customer media kept separate from shop proof) | PRD §9.6, §9.7 |
-| Consumer maintenance tracker | **Separate product, parked.** *"[app] by ShopTrace"* — cross-tenant, owner-centric; seam designed now, build after pilot | PRD §34 |
+| Consumer maintenance tracker | **Separate product + separate backend, parked.** *Garage by ShopTrace* (Expo/RN); integrated via ShopTrace partner API; build after pilot | PRD §34, `consumer-app-prd.md` |
 | Mechanic capture | **Native camera** (`<input capture>`), device-agnostic (tablet *or* phone) | PRD §12.12 |
 | Network reliability | **Pure cloud, zero setup is the default**; APs and local photo relay are optional add-ons; full edge deferred | PRD §27.4 |
 | Onboarding/KISS | Minimal sign-up + skippable wizard + seeded defaults + per-tenant theming + feature toggles | PRD §33 |
@@ -87,3 +87,4 @@ Planning is essentially complete at the product and architecture level. The PRD 
 - **v1.3** — dropped Prisma in favor of Supabase-native tooling
 - **v1.4** — finalized hosting (Vercel); custom-domain add-on (§33.8)
 - **v1.5** — renamed product to ShopTrace; booking + customer media (§9.6–9.7); consumer-app seam parked (§34)
+- **v1.6** — consumer app spun out to its own PRD + backend (`consumer-app-prd.md`, *Garage by ShopTrace*)

@@ -1,6 +1,6 @@
 # ShopTrace — Product Requirements Document
 
-**Version:** 1.5  
+**Version:** 1.6  
 **Date:** 2026-06-02  
 **Status:** Authoritative — Section 0 decisions confirmed  
 **Source:** Merged from v1 draft + v2 revision  
@@ -1675,16 +1675,18 @@ White-labeling is only complete when the customer-facing URL is the shop's own. 
 
 **Status: parked.** Documented as a deliberate future direction with the integration seam designed now, but **nothing is built until the shop MVP and pilot are validated.** This protects focus while keeping the upgrade path open.
 
-**Vision:** a separate consumer-facing product — *"[app name] by ShopTrace"* — a car owner's maintenance tracker (service history, mileage/fuel logs, DIY maintenance entries, document storage, and PMS reminders for all their vehicles).
+> **Full spec:** see `docs/consumer-app-prd.md` (*Garage by ShopTrace*). This section is only the seam from ShopTrace's side.
 
-### 34.1 Why It's a Separate Product, Not a ShopTrace Feature
+**Vision:** a separate consumer-facing product — *"[app name] by ShopTrace"* — a car owner's companion: service history, fuel economy, spending, document vault, reminders, and a show-off build sheet, that **auto-fills when the owner visits a ShopTrace shop.**
+
+### 34.1 Why It's a Separate Product *and Separate Backend*
 
 The two products have **opposite ownership models**, and conflating them breaks the security model:
 
 - **ShopTrace is shop-owned and multi-tenant** — the *shop* is the tenant; RLS isolates shops from each other.
-- **The consumer tracker is car-owner-owned and inherently cross-tenant** — one owner's vehicle history spans *many* shops, deliberately crossing the tenant boundary RLS exists to enforce.
+- **The consumer app is car-owner-owned and inherently cross-tenant** — one owner's vehicle history spans *many* shops, deliberately crossing the tenant boundary RLS exists to enforce.
 
-A persistent customer login *inside* a single ShopTrace tenant only ever shows that one shop's history — it is not the consumer product. The real consumer product needs a **consumer-identity layer that sits above tenants**. So it is built as its own product that *links to* ShopTrace, not as a tab inside it.
+Co-locating them in one database would force awkward cross-tenant RLS exceptions and couple two products with very different security boundaries and release cadences. So the consumer app is built as **its own product with its own backend**, integrated to ShopTrace via a partner API — which fully preserves the auto-fill advantage. It is *not* a tab inside ShopTrace.
 
 ### 34.2 The Integration Seam (design now, build later)
 
@@ -1692,8 +1694,9 @@ So the future product is cheap to add, ShopTrace is built with these seams from 
 
 - **Owner-centric identity, separate from shop staff identity.** A car owner is not a shop tenant user.
 - **Verified vehicle ownership is the link — not raw plate.** Plate is guessable/spoofable, so a consumer claims a vehicle via **plate + a shop-issued OTP / claim link** (the data model is ready: `Vehicle`, plate-as-match-key, and time-bound `VehicleOwnership`, Section 11). This also respects ownership transfer (18.6): a consumer sees only their own ownership period.
-- **A clean internal API** exposes the *customer-visible, approved* records for vehicles an owner has verified. Whether the consumer experience first ships as a mode in the tracking portal or as a standalone app, it consumes the same API — packaging, not rewrite.
-- **Cross-tenant read scoping:** the consumer layer reads approved customer-visible records across any ShopTrace shop the owner has visited; it never sees internal notes, other customers' data, or unverified vehicles.
+- **A clean partner API** exposes the *customer-visible, approved* records for vehicles an owner has verified. The separate-backend consumer app consumes this API; ShopTrace's job is to expose and secure it.
+- **Cross-shop read scoping:** the API returns approved customer-visible records across any ShopTrace shop the owner has visited; it never returns internal notes, other customers' data, or unverified vehicles.
+- **Two ShopTrace-side build gates** for the consumer app to exist: (1) the **partner API** and (2) the **verified-ownership claim flow** (shop-issued OTP / claim link). Until both ship, there is no auto-fill.
 
 ### 34.3 Strategic Upside (why it's worth the seam)
 
@@ -1779,3 +1782,8 @@ It's a **growth flywheel and moat:** more shops on ShopTrace → richer cross-sh
 - **Added Section 9.7 — Customer-Supplied Media & Notes (P2):** customers attach photos/short videos/notes that surface to the mechanic as a labelled "Customer-reported concern," strictly separated from shop proof (19), within the media budget (24). Feature-toggled.
 - **Added Section 34 — Consumer Maintenance Tracker (parked future product):** *"[app] by ShopTrace"*. Documented as a *separate* product (opposite ownership model: car-owner-owned and cross-tenant vs shop-owned multi-tenant), with the integration seam designed now — owner identity, verified vehicle ownership (plate + shop-issued OTP) as the link, a clean cross-tenant read API, the growth-flywheel rationale, and A/B phasing. **Build nothing until pilot validated.**
 - Added booking, customer media, and custom domain to P2; consumer tracker to P3; booking + customer media to MVP nice-to-haves (Sections 29.4, 31).
+
+### v1.5 → v1.6 (consumer app spun out to its own PRD + backend)
+
+- **Decided the consumer app is a separate product *and* separate backend**, integrated to ShopTrace via a partner API (not co-located in the shop Supabase). Reworked Section 34 accordingly (34.1 rationale, 34.2 partner API + two ShopTrace-side build gates).
+- **Added `docs/consumer-app-prd.md`** — full spec for *Garage by ShopTrace*: positioning, retention thesis, the KISS five-pillar spine, PH daily-utility hooks (number coding, fuel prices), document vault with expiry reminders, the enthusiast build-sheet, resale-ready verified history, the LLM quick-capture design, RFID toll-balance automation (the realistic notification-listener + predictive-reminder ladder, given there is no public API), Expo/React Native client choice, consumer-owned data model, MVP/phasing, and DPA privacy handling.
