@@ -1,4 +1,6 @@
-# AutoLounge Service Hub — Public Website PRD
+# ShopTrace — Public Website PRD
+
+> *ShopTrace* is the platform. This spec describes the **public-website surface** that each shop tenant gets. *AutoLounge* is used as the example shop throughout.
 
 **Version:** 1.0  
 **Date:** 2026-06-02  
@@ -576,7 +578,7 @@ On scroll down:
 
 | Page | Title tag | Meta description |
 |------|-----------|-----------------|
-| Home | AutoLounge Service Hub — Auto Shop with Live Job Tracking | Transparent car service with real-time tracking, proof photos, and PMS reminders. Visit us in [City]. |
+| Home | AutoLounge — Auto Shop with Live Job Tracking | Transparent car service with real-time tracking, proof photos, and PMS reminders. Visit us in [City]. |
 | Queue | Is AutoLounge Busy Right Now? — Live Queue Status | Check the current wait time at AutoLounge before you visit. Updated in real time. |
 | Services | Auto Shop Services — PMS, Brakes, Diagnostics & More | See all services offered by AutoLounge: change oil, brake service, diagnostics, mods, and more. |
 | Gallery | Work Gallery — AutoLounge Proof Photos | Browse completed jobs at AutoLounge: before/after photos, mods, PMS documentation, and more. |

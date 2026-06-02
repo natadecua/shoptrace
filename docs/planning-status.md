@@ -1,8 +1,9 @@
-# AutoLounge Service Hub — Planning Status
+# ShopTrace — Planning Status
 
 **Last updated:** 2026-06-02  
 **Phase:** Planning → about to enter build (P0 spike)  
-**Authoritative docs:** `docs/prd.md` (v1.4) · `docs/website-prd.md` · `docs/design-prompts.md`
+**Authoritative docs:** `docs/prd.md` (v1.5) · `docs/website-prd.md` · `docs/design-prompts.md`  
+**Naming:** *ShopTrace* = the product/platform · *AutoLounge* = the pilot/example shop (tenant #1)
 
 ---
 
@@ -26,7 +27,10 @@ Planning is essentially complete at the product and architecture level. The PRD 
 | **ORM** | **None — Prisma dropped.** Supabase CLI migrations + `supabase gen types` (Drizzle is the only ORM worth considering if ever needed — not Prisma) | PRD §27.1, v1.3 changelog |
 | Storage | Supabase Storage (dev) → Cloudflare R2 (prod, zero egress); tenant-prefixed paths + signed URLs | PRD §24.3, §27.1 |
 | Hosting | **Vercel** (Next.js apps + Vite PWA static); host-aware middleware for tenant resolution. Docker+Caddy scoped to deferred local-edge only | PRD §27.1 |
-| Domains | Default `{shop}.autolounge.com` auto at signup; **custom domain = paid add-on** (Vercel Domains API / Cloudflare for SaaS) | PRD §33.8 |
+| Domains | Default `{shop}.shoptrace.app` auto at signup; **custom domain = paid add-on** (Vercel Domains API / Cloudflare for SaaS) | PRD §33.8 |
+| Product naming | **ShopTrace** = platform; AutoLounge = pilot/example shop | PRD header, §1 |
+| Booking + customer media | Added as **P2** (booking ≠ walk-in queue; customer media kept separate from shop proof) | PRD §9.6, §9.7 |
+| Consumer maintenance tracker | **Separate product, parked.** *"[app] by ShopTrace"* — cross-tenant, owner-centric; seam designed now, build after pilot | PRD §34 |
 | Mechanic capture | **Native camera** (`<input capture>`), device-agnostic (tablet *or* phone) | PRD §12.12 |
 | Network reliability | **Pure cloud, zero setup is the default**; APs and local photo relay are optional add-ons; full edge deferred | PRD §27.4 |
 | Onboarding/KISS | Minimal sign-up + skippable wizard + seeded defaults + per-tenant theming + feature toggles | PRD §33 |
@@ -81,3 +85,5 @@ Planning is essentially complete at the product and architecture level. The PRD 
 - **v1.1** — RLS-first multi-tenancy; KISS onboarding/theming/toggles (§33)
 - **v1.2** — native camera capture (§12.12); network reliability tiers (§27.4)
 - **v1.3** — dropped Prisma in favor of Supabase-native tooling
+- **v1.4** — finalized hosting (Vercel); custom-domain add-on (§33.8)
+- **v1.5** — renamed product to ShopTrace; booking + customer media (§9.6–9.7); consumer-app seam parked (§34)

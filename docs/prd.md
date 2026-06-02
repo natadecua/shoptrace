@@ -1,9 +1,10 @@
-# AutoLounge Service Hub — Product Requirements Document
+# ShopTrace — Product Requirements Document
 
-**Version:** 1.0  
+**Version:** 1.5  
 **Date:** 2026-06-02  
 **Status:** Authoritative — Section 0 decisions confirmed  
 **Source:** Merged from v1 draft + v2 revision  
+**Naming:** *ShopTrace* is the product/platform. *AutoLounge* is used throughout only as the example/pilot shop (tenant #1).  
 
 ---
 
@@ -13,7 +14,7 @@ These decisions were pulled out of "open questions" because they block data mode
 
 | # | Decision | Resolved Answer |
 |---|----------|-----------------|
-| D1 | **Bespoke for AutoLounge, or SaaS from day one?** | **Bespoke-first, SaaS-aware.** Build for AutoLounge, but include `tenant_id` on every table from day one so multi-tenancy is a config change, not a rewrite. |
+| D1 | **Bespoke for the pilot shop (AutoLounge), or SaaS from day one?** | **Bespoke-first, SaaS-aware.** Build ShopTrace for the pilot shop (AutoLounge), but include `tenant_id` on every table from day one so multi-tenancy is a config change, not a rewrite. |
 | D2 | **One stack, committed once.** | **MVP and v1 on Supabase Cloud** (Postgres + Auth + Storage + Realtime). Local edge mode is a premium add-on, deferred. This avoids two throwaway rewrites. |
 | D3 | **Notifications are MVP, not P3.** | **At least one push channel ships in the MVP** — one-tap "send link / approval request" via a low-cost PH SMS gateway (Semaphore / Movider) or a copy-to-Messenger clipboard action with pre-built EN/Taglish templates. |
 | D4 | **Photo discipline policy.** | **Minimum required set of 3–4 photos per service template gates "mark job done."** Everything beyond that is optional. Required-photo skips must include an explicit reason; they are never silent. |
@@ -21,17 +22,19 @@ These decisions were pulled out of "open questions" because they block data mode
 
 ---
 
-## 1. Working Product Name
+## 1. Product Name
 
-**AutoLounge Service Hub**
+**ShopTrace** — the platform/product sold to auto shops.
 
-Alternatives: ServiceTrack PH · JobProof Auto · GarageFlow PH · AutoProof Hub · LoungeOps
+*AutoLounge* is the pilot shop (tenant #1) and is used as the example shop throughout this document. A future consumer-facing product is branded *"[app name] by ShopTrace"* (Section 34).
+
+Earlier working-name candidates (historical): AutoLounge Service Hub · ServiceTrack PH · JobProof Auto · GarageFlow PH · AutoProof Hub · LoungeOps.
 
 ---
 
 ## 2. Product Vision
 
-AutoLounge Service Hub is a digital operations and transparency platform for auto shops. It helps shops manage job queues, work orders, mechanic proof photos, customer approvals, payments, vehicle history, PMS reminders, and service reports — while still supporting familiar workflows like walk-ins, Messenger, phone calls, and paper job orders.
+ShopTrace is a digital operations and transparency platform for auto shops. It helps shops manage job queues, work orders, mechanic proof photos, customer approvals, payments, vehicle history, PMS reminders, and service reports — while still supporting familiar workflows like walk-ins, Messenger, phone calls, and paper job orders.
 
 The product should make the shop feel more professional to customers without forcing staff and mechanics into a complicated enterprise system.
 
@@ -328,6 +331,27 @@ Admin actions:
 - Mark shop busy / open / closed
 - Send status link to customer
 
+### 9.6 Appointment Booking (P2)
+
+**Booking is distinct from the walk-in queue.** The queue (9.1–9.5) manages who's in the shop *now*; booking lets a customer reserve a *future* slot. They coexist — a booked appointment simply enters the queue at its scheduled time.
+
+- **Customer-facing booking** from the public site / queue page: pick a service type, see available days/time-bands (not exact minute slots in v1), and request a slot. Configurable per shop: instant-confirm vs request-then-confirm.
+- **Capacity model (simple):** slots are bounded by service-type lanes (quick vs major, 9.2) and a per-day cap the shop sets — not a complex resource scheduler. Keep it KISS.
+- **No-show / reschedule** handling reuses Section 18.3.
+- **Booking → work order:** a confirmed booking pre-creates a draft work order with the customer, vehicle, service type, and any customer-supplied media (9.7) already attached, so intake on the day is one tap.
+- **Notifications:** booking confirmation + reminder reuse the Section 14 channels (SMS / copy-to-Messenger) with EN/Taglish templates.
+- Gated behind a feature toggle (Section 33.6); off by default so walk-in-only shops aren't burdened.
+
+### 9.7 Customer-Supplied Media & Notes (P2)
+
+Customers can attach their own photos, short videos, and notes describing the problem — either in the pre-service intake form (8.3), during booking (9.6), or via the tracking portal before/early in the job — so the mechanic can pre-check the concern (e.g., a video of the noise, a photo of the leak or warning light).
+
+- Flows onto the work order and is shown to the mechanic **alongside the checklist** as a clearly labelled **"Customer-reported concern"** block.
+- **Integrity boundary (important):** customer-supplied media is explicitly tagged **customer-supplied** and is **never** mixed with or presented as shop proof photos (Section 19). Different source, different trust level, different label.
+- **Storage & abuse controls:** counts toward the media budget (Section 24) — apply the same compression and the video cap (≤30s / 50MB); basic content/type validation; size limits per upload.
+- **Privacy:** covered by intake consent (Section 22); customer media is part of the customer's own record.
+- Gated behind a feature toggle (Section 33.6).
+
 ---
 
 ## 10. Admin Work Order System
@@ -421,7 +445,7 @@ Vehicle history shows:
 | **Deposit** | A payment applied before final billing; reduces the balance on the final bill. |
 | **Discount / Promo** | Discount rule, campaign reference. |
 | **Reminder** | PMS reminder linked to customer and vehicle. |
-| **Domain** | Per-tenant hostname(s): the default `{shop}.autolounge.com` plus any verified custom domain (Section 33.8). Fields: `hostname`, `surface` (portal/public), `verified`, `cert_status`. Drives host-aware tenant resolution. |
+| **Domain** | Per-tenant hostname(s): the default `{shop}.shoptrace.app` plus any verified custom domain (Section 33.8). Fields: `hostname`, `surface` (portal/public), `verified`, `cert_status`. Drives host-aware tenant resolution. |
 | **AuditLog** | All significant state changes (Section 23.1). |
 
 ### 11.2 Identity Resolution (Dedup Problem)
@@ -616,7 +640,7 @@ A private link to view status, checklist progress, approved proof photos, issues
 
 ### 13.2 Access Model
 
-Link format: `https://track.shopdomain.com/track/{secure-token}`
+Link format: `https://{shop}.shoptrace.app/track/{secure-token}` (or the shop's own domain if the custom-domain add-on is enabled — Section 33.8)
 
 Security:
 - Random unguessable token (UUID v4 or similar)
@@ -1230,7 +1254,7 @@ Many staff and customers are most comfortable in Filipino/Taglish.
 
 ## 26. SaaS Expansion Direction
 
-The custom AutoLounge system can later evolve into a SaaS for auto shops.
+ShopTrace is built bespoke-first for the pilot shop but evolves into a full self-serve SaaS for auto shops.
 
 ### 26.1 Positioning
 
@@ -1292,7 +1316,7 @@ A service-transparency and work-order platform for independent auto shops.
 | Background jobs / reminders | `pg_cron` (MVP) → dedicated queue/worker later if volume grows |
 | Notifications (MVP) | Semaphore or Movider (PH SMS) + copy-to-Messenger |
 | App hosting (cloud) | **Vercel** (Next.js apps) + static hosting for the Vite PWA; host-aware middleware resolves tenant |
-| Domains | Default `{shop}.autolounge.com` (wildcard DNS + cert, auto at signup); **custom domain as a paid add-on** (Section 33.8) |
+| Domains | Default `{shop}.shoptrace.app` (wildcard DNS + cert, auto at signup); **custom domain as a paid add-on** (Section 33.8) |
 | Monitoring | Sentry + uptime monitoring |
 | Payments (customer) | Manual in v1 (GCash/bank) — no gateway |
 | Payments (SaaS billing) | PayMongo / Xendit (added when SaaS launches) |
@@ -1451,6 +1475,8 @@ Prove the system can make a real shop job transparent from intake to release —
 - Local edge server
 - Video proof uploads
 - Multi-branch support
+- Appointment booking (Section 9.6)
+- Customer-supplied media & notes (Section 9.7)
 
 ---
 
@@ -1502,6 +1528,9 @@ Prove the system can make a real shop job transparent from intake to release —
 - Promo handling and customer segments
 - Works gallery with gallery approval flow
 - Auto supply inquiry catalog
+- Appointment booking (Section 9.6)
+- Customer-supplied media & notes (Section 9.7)
+- Custom domain add-on (Section 33.8)
 - Advanced reports
 - Rework/warranty tracking and rework-rate report
 - Staff performance reports (only after time-capture exists)
@@ -1517,6 +1546,7 @@ Prove the system can make a real shop job transparent from intake to release —
 - Local edge server
 - Accounting integrations
 - Video proof at scale
+- Consumer maintenance tracker — *"by ShopTrace"* (Section 34, parked)
 
 ---
 
@@ -1560,7 +1590,7 @@ A short, skippable wizard. Each step writes immediately, so a shop that quits ha
 | Step | What it asks | What it does | Skippable? |
 |------|-------------|--------------|-----------|
 | 1. Shop basics | Name, address, phone, hours | Pre-filled with sensible defaults (e.g., Mon–Sat 8–6) | Yes |
-| 2. Branding | Upload logo, pick a brand color | Logo stored per-tenant; brand color **auto-extracted from the logo** as a suggestion (editable). Instantly themes the whole app + customer portal (33.5) | Yes — falls back to AutoLounge default theme |
+| 2. Branding | Upload logo, pick a brand color | Logo stored per-tenant; brand color **auto-extracted from the logo** as a suggestion (editable). Instantly themes the whole app + customer portal (33.5) | Yes — falls back to the default ShopTrace theme |
 | 3. Your services | Checkbox the services you offer (the 11 categories, Section 8.2) | **Seeds the matching default checklist + photo templates** for each selected service (33.4). This is the key "ready to use" moment | Yes — defaults to PMS + General Repair |
 | 4. Your team | Invite mechanics/staff by email (optional) | Sends Supabase Auth invites auto-stamped with this `tenant_id`; assigns roles | Yes — owner can work solo and invite later |
 | 5. Done | — | Lands on the queue board with a **"Create your first work order"** prompt and a deletable sample work order to explore | — |
@@ -1579,7 +1609,7 @@ Created automatically at sign-up / service selection so the shop never configure
 
 ### 33.5 Branding / White-Label (per tenant)
 
-Each shop's brand is applied across every surface so it feels like *their* app, not AutoLounge's — which is also the foundation of the SaaS white-label story.
+Each shop's brand is applied across every surface so it feels like *their* app, not ShopTrace's — which is also the foundation of the SaaS white-label story.
 
 - **Inputs:** logo (stored per-tenant), primary brand color (picker or auto-derived from logo), optional light/dark preference.
 - **Applied to:** admin app header/accent, the **customer tracking portal**, the **printable job order**, notification message headers, and the public website/queue page.
@@ -1603,7 +1633,9 @@ A **Features** settings page where the shop turns capabilities on/off. The produ
 | Auto supply catalog | Off | Catalog pages hidden |
 | Works gallery | Off | Gallery hidden |
 | Multi-mechanic assignment | Off | Single assignee per job |
-| Custom domain (paid add-on) | Off | Customer surfaces use the default `{shop}.autolounge.com` subdomain (Section 33.8) |
+| Appointment booking | Off | Walk-in queue only (Section 9.6) |
+| Customer-supplied media & notes | Off | Intake is staff-entered only (Section 9.7) |
+| Custom domain (paid add-on) | Off | Customer surfaces use the default `{shop}.shoptrace.app` subdomain (Section 33.8) |
 | Multi-branch | Off | Single location (P3) |
 
 **Toggle principles:**
@@ -1614,7 +1646,7 @@ A **Features** settings page where the shop turns capabilities on/off. The produ
 
 ### 33.7 Why This Matters for SaaS
 
-Onboarding wizard + per-tenant defaults + theming + feature toggles are exactly what turns the bespoke AutoLounge build into a self-serve SaaS later (D1) with no rewrite: a new shop self-provisions, brands itself, and dials in complexity — all without engineering involvement.
+Onboarding wizard + per-tenant defaults + theming + feature toggles are exactly what turns the bespoke single-shop build into a self-serve SaaS later (D1) with no rewrite: a new shop self-provisions, brands itself, and dials in complexity — all without engineering involvement.
 
 ### 33.8 Custom Domain (Paid Add-On)
 
@@ -1624,10 +1656,10 @@ White-labeling is only complete when the customer-facing URL is the shop's own. 
 
 | Level | URL | Setup | Tier |
 |-------|-----|-------|------|
-| **Default subdomain** | `{shop-slug}.autolounge.com` | **Automatic at signup** — wildcard DNS (`*.autolounge.com`) + wildcard TLS cert; zero shop effort | Included |
+| **Default subdomain** | `{shop-slug}.shoptrace.app` | **Automatic at signup** — wildcard DNS (`*.shoptrace.app`) + wildcard TLS cert; zero shop effort | Included |
 | **Custom domain** | `shopname.com` / `track.shopname.com` | Shop points a CNAME at the platform; cert auto-provisioned | **Paid add-on** |
 
-**Which surfaces get the custom domain:** the **customer-facing ones** — the tracking portal and the public website/queue page (that's what the shop's customers see). The admin app stays on the platform domain (`app.autolounge.com`); shops don't need to brand their internal tool.
+**Which surfaces get the custom domain:** the **customer-facing ones** — the tracking portal and the public website/queue page (that's what the shop's customers see). The admin app stays on the platform domain (`app.shoptrace.app`); shops don't need to brand their internal tool.
 
 **How it works technically:**
 - **Tenant resolution is host-aware from day one.** Host-aware middleware reads the incoming `Host` header → looks up the `Domain` record (Section 11.1) → resolves the tenant and its theme. Building this for the default subdomain means custom domains are a lookup addition, not a refactor.
@@ -1636,6 +1668,41 @@ White-labeling is only complete when the customer-facing URL is the shop's own. 
 - **Abuse/safety:** domain-ownership verification before activation; guard against dangling-CNAME takeover; certs logged.
 
 **Why it's an add-on, not core:** it carries real per-domain cost and support surface, and most shops are happy on the free subdomain. It's a natural upsell for established shops that want their brand front-and-center — and it's a feature toggle + `Domain` row like everything else, so enabling it is config, not engineering.
+
+---
+
+## 34. Consumer Maintenance Tracker — Future Product (Parked)
+
+**Status: parked.** Documented as a deliberate future direction with the integration seam designed now, but **nothing is built until the shop MVP and pilot are validated.** This protects focus while keeping the upgrade path open.
+
+**Vision:** a separate consumer-facing product — *"[app name] by ShopTrace"* — a car owner's maintenance tracker (service history, mileage/fuel logs, DIY maintenance entries, document storage, and PMS reminders for all their vehicles).
+
+### 34.1 Why It's a Separate Product, Not a ShopTrace Feature
+
+The two products have **opposite ownership models**, and conflating them breaks the security model:
+
+- **ShopTrace is shop-owned and multi-tenant** — the *shop* is the tenant; RLS isolates shops from each other.
+- **The consumer tracker is car-owner-owned and inherently cross-tenant** — one owner's vehicle history spans *many* shops, deliberately crossing the tenant boundary RLS exists to enforce.
+
+A persistent customer login *inside* a single ShopTrace tenant only ever shows that one shop's history — it is not the consumer product. The real consumer product needs a **consumer-identity layer that sits above tenants**. So it is built as its own product that *links to* ShopTrace, not as a tab inside it.
+
+### 34.2 The Integration Seam (design now, build later)
+
+So the future product is cheap to add, ShopTrace is built with these seams from early on:
+
+- **Owner-centric identity, separate from shop staff identity.** A car owner is not a shop tenant user.
+- **Verified vehicle ownership is the link — not raw plate.** Plate is guessable/spoofable, so a consumer claims a vehicle via **plate + a shop-issued OTP / claim link** (the data model is ready: `Vehicle`, plate-as-match-key, and time-bound `VehicleOwnership`, Section 11). This also respects ownership transfer (18.6): a consumer sees only their own ownership period.
+- **A clean internal API** exposes the *customer-visible, approved* records for vehicles an owner has verified. Whether the consumer experience first ships as a mode in the tracking portal or as a standalone app, it consumes the same API — packaging, not rewrite.
+- **Cross-tenant read scoping:** the consumer layer reads approved customer-visible records across any ShopTrace shop the owner has visited; it never sees internal notes, other customers' data, or unverified vehicles.
+
+### 34.3 Strategic Upside (why it's worth the seam)
+
+It's a **growth flywheel and moat:** more shops on ShopTrace → richer cross-shop history available to owners → more consumer adoption → owners pressure their shops to join ShopTrace → more shops. The consumer app turns ShopTrace's shop network into a defensible network effect. That payoff is exactly why we design the seam early even though we build the app late.
+
+### 34.4 Phasing
+
+- **Phase A (cheap, within ShopTrace, optional later):** upgrade the per-job tracking token into a *persistent customer account scoped to one shop* — a customer sees all their visits to that shop. No cross-tenant complexity; validates demand for persistence.
+- **Phase B (the parked product):** the cross-shop, owner-centric *"by ShopTrace"* app on the consumer-identity layer + API above. Built only after pilot evidence and Phase A signal.
 
 ---
 
@@ -1702,5 +1769,13 @@ White-labeling is only complete when the customer-facing URL is the shop's own. 
 
 - **Finalized hosting:** Vercel for the Next.js apps + static hosting for the Vite PWA, with host-aware middleware for tenant resolution. Docker + Caddy + Cloudflare Tunnel are now explicitly scoped to the *deferred local-edge tier only*, not the cloud default (Section 27.1).
 - **Added `pg_cron` row** for reminders/background jobs (Section 27.1).
-- **Added Section 33.8 — Custom Domain (paid add-on):** default `{shop}.autolounge.com` subdomain automatic at signup; custom domain (`shopname.com`) as an upsell covering the customer-facing surfaces (tracking portal + public site), with auto-provisioned certs via Vercel Domains API (or Cloudflare for SaaS at scale) and a self-serve DNS-verification flow.
+- **Added Section 33.8 — Custom Domain (paid add-on):** default `{shop}.shoptrace.app` subdomain automatic at signup; custom domain (`shopname.com`) as an upsell covering the customer-facing surfaces (tracking portal + public site), with auto-provisioned certs via Vercel Domains API (or Cloudflare for SaaS at scale) and a self-serve DNS-verification flow.
 - **Added `Domain` entity** (Section 11.1) and a custom-domain feature toggle (Section 33.6); added custom domain to SaaS pricing axes (Section 26.3).
+
+### v1.4 → v1.5 (rename to ShopTrace + booking, customer media, consumer-app seam)
+
+- **Renamed the product to ShopTrace.** *AutoLounge* is now used only as the example/pilot shop (tenant #1). Updated the title, Sections 1–2, platform domains (`*.shoptrace.app`, `app.shoptrace.app`, tracking-link format), default-theme/white-label self-references, and the SaaS framing. Added a naming note to the header.
+- **Added Section 9.6 — Appointment Booking (P2):** distinct from the walk-in queue; simple lane/day-cap capacity; booking pre-creates a draft work order; reuses no-show/reschedule (18.3) and notifications (14). Feature-toggled, off by default.
+- **Added Section 9.7 — Customer-Supplied Media & Notes (P2):** customers attach photos/short videos/notes that surface to the mechanic as a labelled "Customer-reported concern," strictly separated from shop proof (19), within the media budget (24). Feature-toggled.
+- **Added Section 34 — Consumer Maintenance Tracker (parked future product):** *"[app] by ShopTrace"*. Documented as a *separate* product (opposite ownership model: car-owner-owned and cross-tenant vs shop-owned multi-tenant), with the integration seam designed now — owner identity, verified vehicle ownership (plate + shop-issued OTP) as the link, a clean cross-tenant read API, the growth-flywheel rationale, and A/B phasing. **Build nothing until pilot validated.**
+- Added booking, customer media, and custom domain to P2; consumer tracker to P3; booking + customer media to MVP nice-to-haves (Sections 29.4, 31).

@@ -1,4 +1,6 @@
-# AutoLounge Service Hub — Claude Design Prompts
+# ShopTrace — Claude Design Prompts
+
+> *ShopTrace* is the product. *AutoLounge* is the example shop shown in the mockups (the shop's own brand appears on customer-facing and admin surfaces via per-tenant theming).
 
 Use these prompts with Claude or any AI design tool (Canva AI, v0, Figma AI, etc.) to generate UI mockups for each major surface. Each prompt is self-contained and includes context, layout direction, and component detail.
 
@@ -6,7 +8,7 @@ Use these prompts with Claude or any AI design tool (Canva AI, v0, Figma AI, etc
 
 ## Prompt 1 — Admin Queue Board (Desktop)
 
-Design a **dark-mode auto shop operations dashboard** called "AutoLounge Service Hub." This is the main screen that front-desk staff and managers look at all day.
+Design a **dark-mode auto shop operations dashboard** — the ShopTrace admin app, here branded for the example shop "AutoLounge." This is the main screen that front-desk staff and managers look at all day.
 
 **Layout:** Full-width desktop. Left sidebar for navigation, main area split into a kanban-style job queue.
 
@@ -50,7 +52,7 @@ Design a **dark-mode auto shop operations dashboard** called "AutoLounge Service
 
 ## Prompt 2 — Work Order Creation Form (Desktop / Admin)
 
-Design a **work order creation modal or full-page form** for an auto shop management system called AutoLounge Service Hub. Dark mode, desktop.
+Design a **work order creation modal or full-page form** for the ShopTrace admin app (example shop: AutoLounge). Dark mode, desktop.
 
 **Form title:** "New Work Order"
 
@@ -167,7 +169,7 @@ Design a **mobile web customer-facing tracking page** for an auto shop. This is 
 **Screen: Job In Progress — Waiting for Approval**
 
 **Top:**
-- Shop logo and name: "AutoLounge Service Hub"
+- Shop logo and name: "AutoLounge"
 - Tagline: "Your vehicle is in good hands."
 
 **Job summary card:**
@@ -241,7 +243,7 @@ Payment option tabs: Cash · GCash · Bank Transfer
 **GCash tab (active):**
 - GCash QR code image (centered)
 - GCash number: 09XX-XXX-XXXX
-- Account name: AutoLounge Service Hub
+- Account name: AutoLounge
 - Amount to send: **₱ 5,035**
 
 **Upload proof section:**
@@ -304,7 +306,7 @@ Show a mix of states:
 Design a **public-facing queue status page** for an auto shop that customers check before visiting. Mobile-first, light mode. This page requires no login.
 
 **Header:**
-- Shop logo and name: "AutoLounge Service Hub"
+- Shop logo and name: "AutoLounge"
 - Address + "Get Directions" link
 - Operating hours: "Open · Mon–Sat 8:00 AM – 6:00 PM"
 
