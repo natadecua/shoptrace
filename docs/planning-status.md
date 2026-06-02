@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-06-02  
 **Phase:** Planning → about to enter build (P0 spike)  
-**Authoritative docs:** `docs/prd.md` (v1.6) · `docs/website-prd.md` · `docs/design-prompts.md` · `docs/consumer-app-prd.md` (parked)  
+**Authoritative docs:** `docs/prd.md` (v1.6) · `docs/website-prd.md` · `docs/design-prompts.md` · `docs/consumer-app-prd.md` (parked) · `docs/user-journeys.md` · `docs/integration-api.md`  
 **Naming:** *ShopTrace* = the product/platform · *AutoLounge* = the pilot/example shop (tenant #1)
 
 ---

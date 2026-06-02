@@ -1694,7 +1694,7 @@ So the future product is cheap to add, ShopTrace is built with these seams from 
 
 - **Owner-centric identity, separate from shop staff identity.** A car owner is not a shop tenant user.
 - **Verified vehicle ownership is the link — not raw plate.** Plate is guessable/spoofable, so a consumer claims a vehicle via **plate + a shop-issued OTP / claim link** (the data model is ready: `Vehicle`, plate-as-match-key, and time-bound `VehicleOwnership`, Section 11). This also respects ownership transfer (18.6): a consumer sees only their own ownership period.
-- **A clean partner API** exposes the *customer-visible, approved* records for vehicles an owner has verified. The separate-backend consumer app consumes this API; ShopTrace's job is to expose and secure it.
+- **A clean partner API** exposes the *customer-visible, approved* records for vehicles an owner has verified. The separate-backend consumer app consumes this API; ShopTrace's job is to expose and secure it. **Contract:** `docs/integration-api.md`.
 - **Cross-shop read scoping:** the API returns approved customer-visible records across any ShopTrace shop the owner has visited; it never returns internal notes, other customers' data, or unverified vehicles.
 - **Two ShopTrace-side build gates** for the consumer app to exist: (1) the **partner API** and (2) the **verified-ownership claim flow** (shop-issued OTP / claim link). Until both ship, there is no auto-fill.
 
