@@ -583,13 +583,27 @@ For jobs split across technicians:
 
 - Camera opens in under 3 seconds
 - Minimal typing (large tap targets, presets where possible)
-- Large buttons — designed for hands with grease and gloves
+- Large buttons — designed for hands with grease and gloves (a tethered passive stylus per station is a cheap mitigation for greasy/gloved capacitive touch)
 - Works on affordable Android tablets (tested on target hardware — see Section 28)
 - Visible upload status per photo
 - Retry failed uploads automatically; surface retry button within 5 seconds of failure
 - No silent photo loss
 - Clear required vs optional photo indicators
 - Works on slow / intermittent Wi-Fi (photos queue and retry automatically)
+
+### 12.12 Photo Capture Method & Device Strategy
+
+**Capture method (committed): native camera via file input, not a custom viewfinder.** Use `<input type="file" accept="image/*" capture="environment">` to hand capture to the device's native camera app, rather than a custom in-app `getUserMedia` viewfinder. Rationale:
+
+- On affordable Android tablets, `getUserMedia` + canvas capture has worse autofocus, worse low-light, and limited exposure control — and it is the path most likely to fail the Section 28 spike. Garage bays are dark and a chassis underside is the worst case.
+- The native camera app gives real autofocus/HDR/low-light handling for free, with less code and far higher reliability.
+- The trade-off — no custom guide overlay — is handled by showing a **static reference image** ("take a photo like this") on each checklist step screen instead.
+
+**Photo legibility is the real bar.** The goal is not "a photo uploaded" but "the brake-pad thickness / part number / damage is actually readable." This is a hardware + lighting concern as much as software (Section 28.2).
+
+**Device-agnostic capture.** The capture flow is a PWA and must work on any device — a shared shop tablet *or* a mechanic's own phone — via a "claim job" action (scan the work-order QR / tap the assigned job). Mechanics' phones often have markedly better cameras and are always on hand; the shop chooses its device policy without a code change. Shared-device hygiene (PIN re-auth per job, purge-after-sync) applies regardless (Section 27.2, 27.5).
+
+**Pipeline ordering (no silent loss).** Capture → compress client-side (resize ~1600px long edge, ~0.7 quality; test for crashes on low-RAM tablets) → **write to IndexedDB before the UI confirms capture** → enqueue → upload → remove from queue **only after server ack**. Retry fires on three triggers: Background Sync, app foreground, and the `online` event — never Background Sync alone.
 
 ---
 
@@ -1304,14 +1318,32 @@ This is the elegant, low-effort strong-isolation pattern Supabase is built for, 
 
 For local-edge deployments, the customer portal exposed via a shop's consumer ISP goes down when the shop's internet goes down. Host the **customer portal in the cloud** even when admin runs locally.
 
-### 27.4 Migration Workflow
+### 27.4 Network Reliability Tiers
+
+There are two distinct network problems people conflate, and they have different fixes:
+
+- **WAN reliability** — the shop's *internet* is down or slow (affects sync to cloud and customer-portal reachability).
+- **LAN coverage** — *local Wi-Fi* dead zones, weak signal at the back bay, a cheap office router that can't reach the lifts (affects the tablet reaching anything at all). A car-filled garage is an RF-hostile, metal-heavy environment.
+
+Reliability is offered as escalating tiers. **Most shops need only the default** — modern PH internet is generally reliable enough, so the product ships as a zero-setup cloud app and only adds hardware where a specific shop proves it needs it. This keeps adoption a no-brainer (Principle #10).
+
+| Tier | What it is | Network setup | For whom |
+|------|-----------|---------------|----------|
+| **Default — Pure cloud** | Cloud-only (Supabase + R2). The PWA offline queue (27.2) is the safety net for occasional blips: photos/checklist state captured during a drop sit in IndexedDB and sync on reconnect — the mechanic is never blocked, nothing is lost. | **None.** Works on the shop's existing internet, no extra hardware. | Most shops |
+| **Optional — Better Wi-Fi coverage** | Add access points (UniFi, or cheap mesh like TP-Link Deco) so every bay has signal. ~₱5–15k of hardware. | Light, one-time | Shops with real LAN dead zones |
+| **Add-on — Local photo store-and-forward relay** | A cheap LAN device (mini-PC / Raspberry Pi) runs a tiny **one-directional upload relay**: tablets push photos to the *local* device first (always fast, reachable on LAN even when WAN is dead), and it forwards to cloud R2/Supabase when the internet returns. Far simpler than full edge — it is store-and-forward of the single heaviest payload, **not** a DB replica and has **no** bidirectional conflict resolution. | Moderate | Shops with frequent, long internet outages |
+| **Premium — Full local edge** | Local Postgres replica, whole app runs offline, bidirectional sync. High complexity and support cost. Deferred (P3, Section 26.2). | Heavy | Large shops / genuinely poor internet, proven need only |
+
+**Key insight:** the PWA offline queue already delivers most of the reliability benefit of a local server *for the capture flow specifically*, with none of the sync complexity. The only real casualty of a long WAN outage is the customer portal being unreachable — and that is a cloud-hosting concern (27.3), not a data-loss one. Do not build down-tier complexity until a real shop's pilot data proves the tier above is insufficient.
+
+### 27.5 Migration Workflow
 
 Schema migrations via Prisma Migrate:
 - `prisma migrate dev` for local development
 - `prisma migrate deploy` applied in CI/CD before each deployment
 - Local Supabase development via `supabase start` (Docker) so developers have isolated instances and do not share a live database
 
-### 27.5 Authentication Strategy
+### 27.6 Authentication Strategy
 
 | Actor | Method |
 |-------|--------|
@@ -1330,20 +1362,22 @@ Build this **first.** It is the highest-risk UX feature.
 
 ### 28.1 Scope
 
-One PMS work order on one affordable Android tablet.
+One PMS work order on one affordable Android tablet — **and on a mechanic's own phone**, since capture is device-agnostic (Section 12.12). Run the spike **on the shop's real Wi-Fi at the worst bay** (e.g., under a car at the back), not on office Wi-Fi — testing on good Wi-Fi tells you nothing about the environment that actually breaks this.
 
 ### 28.2 Success Criteria
 
 1. Camera opens in under 3 seconds
-2. Mechanic captures 8 required PMS photos via in-app capture (not gallery upload)
-3. 8 photos upload in under 4 minutes on weak Wi-Fi (throttled to ~1 Mbps in test)
-4. Failed upload shows retry button within 5 seconds
-5. No photo loss after a simulated connection drop (airplane mode toggle mid-upload)
-6. Mechanic completes the entire flow without developer instructions
-7. Admin can see per-photo upload status in real time
-8. Customer tracking page shows admin-approved photos correctly
-9. One short issue video (≤30s) captures and uploads within acceptable time/size — or video is explicitly cut from MVP if result is poor
-10. Concurrent upload from two mechanics on the same job completes without conflicts or data loss
+2. Mechanic captures the required PMS photos via **native camera capture** (`<input capture>`), not a custom in-app viewfinder and not gallery upload (Section 12.12)
+3. **Photos are legible** — brake-pad thickness, part numbers, and damage are actually readable, including in poor bay lighting (this is the real bar, not just "a file uploaded")
+4. Photos upload in under 4 minutes on weak Wi-Fi (throttled to ~1 Mbps in test)
+5. Failed upload shows retry button within 5 seconds; retry fires on reconnect, app-foreground, and `online` event
+6. No photo loss after a simulated connection drop (airplane-mode toggle mid-upload) — photo is in IndexedDB before capture is confirmed, removed only after server ack
+7. Mechanic completes the entire flow without developer instructions
+8. Admin can see per-photo upload status in real time
+9. Customer tracking page shows admin-approved photos correctly
+10. Client-side compression (resize ~1600px, ~0.7 quality) runs without crashing on the low-RAM target tablet
+11. One short issue video (≤30s) captures and uploads within acceptable time/size — or video is explicitly cut from MVP if result is poor
+12. Concurrent upload from two mechanics on the same job completes without conflicts or data loss
 
 ### 28.3 Failure Decision
 
@@ -1618,3 +1652,10 @@ Onboarding wizard + per-tenant defaults + theming + feature toggles are exactly 
 - **Added Section 33 — Onboarding, Branding & Feature Configuration:** minimal sign-up, skippable first-run wizard, ready-to-use seeded defaults, per-tenant logo/theme white-labeling, and opt-in feature toggles (including the proof-photo "image recorder" as a togglable module) with Simple/Standard/Full presets
 - Storage: documented Cloudflare R2 as production target (zero egress) vs Supabase Storage for dev/MVP
 - v1 service categories, full status enumerations (13 statuses), and role permission detail restored from v1 draft
+
+### v1.1 → v1.2 (mechanic capture + network reliability)
+
+- **Added Section 12.12 — Photo Capture Method & Device Strategy:** committed to native camera capture (`<input capture>`) over a custom `getUserMedia` viewfinder; device-agnostic capture (shared tablet *or* mechanic's phone via claim-job); legibility as the real bar; explicit no-silent-loss pipeline ordering
+- **Added Section 27.4 — Network Reliability Tiers:** separated WAN vs LAN problems; made **pure cloud (zero network setup) the default** since modern internet is generally reliable, with the PWA offline queue as the safety net; better Wi-Fi (APs) and a local photo store-and-forward relay are optional add-ons; full local edge stays deferred (P3). Renumbered Migration → 27.5, Auth → 27.6
+- **Updated Section 28 (spike):** native-capture criterion, photo-legibility criterion, run on real worst-bay Wi-Fi and on a phone, client-side compression crash test
+- **Updated Section 12.11:** tethered stylus mitigation for greasy/gloved capacitive touch

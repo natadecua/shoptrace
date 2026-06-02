@@ -130,34 +130,33 @@ Show a few done items and a few pending items mixed. Include:
 
 ---
 
-## Prompt 4 — Mechanic Photo Capture Screen (Mobile/Tablet)
+## Prompt 4 — Mechanic Photo Step Screen (Mobile/Tablet)
 
-Design a **camera capture screen** for the mechanic app. The mechanic has tapped "Take Photo" on a required checklist step.
+> **Capture method note:** The app uses the **device's native camera** (`<input type="file" capture>`), not a custom in-app viewfinder — this is more reliable and produces better photos on cheap tablets in poor bay lighting (PRD §12.12). So this screen is the *step screen that launches the native camera and shows the result*, NOT a custom viewfinder. Design accordingly.
 
-**Full-screen layout:**
+Design a **photo-step screen** for the mechanic app. The mechanic is on a required checklist step and needs to capture a photo. Tapping the capture button opens the phone/tablet's native camera; this screen shows the guidance before and the captured result after.
 
-**Top overlay:**
+**Top bar:**
 - Back/cancel (X) — top left
-- Step name in large white text on a dark overlay at the top: "Step 4 of 10 — Oil Draining"
+- Step name in large text: "Step 4 of 10 — Oil Draining"
 - Required badge: "REQUIRED" in orange pill
 
-**Camera viewfinder:** Full screen, live camera preview
+**Reference image card (the guide):**
+- A clean example photo of what a good "oil draining" shot looks like, labelled "Take a photo like this"
+- Short instruction line: "Capture the oil draining from the pan, clearly in frame"
 
-**Guide overlay (faint):**
-- Dashed rectangle guide in the center with label: "Position the oil drain pan in frame"
+**Primary action:**
+- Large orange button with camera icon: **"Open Camera"** (launches native camera) — full width, minimum 64px tall
 
-**Bottom control bar (dark gradient overlay):**
-- Left: thumbnail of last photo taken (tappable to review)
-- Center: large circular shutter button (white, 72px, with subtle shadow)
-- Right: flip camera icon
+**After capture — result state:**
+- Large thumbnail of the photo just taken
+- "Retake" (outlined) and "Use This Photo" (primary) buttons
+- Upload status chip: "Saved · uploading… 60%" with a subtle progress bar
+- Note: "Photo is saved to this job even offline — it will upload automatically"
 
-**Below shutter area:**
-- Small label: "Photo will be linked to this job automatically"
-- Upload status for previous photo (if uploading): "Photo 3 uploading… 60%" with a subtle progress bar
+**If upload fails:** Red banner — "Upload failed · will retry automatically" with a manual "Retry now" button
 
-**If upload fails:** Red banner slides up — "Upload failed · Tap to retry" with a retry button
-
-**Style:** Black background with camera content. Minimal UI to maximize viewfinder space. Everything is large and finger-friendly. No text smaller than 16px.
+**Style:** Dark mode. Everything large and finger-friendly (dirty thumbs). No text smaller than 16px. The reference image and the captured result are the two hero elements. No live-viewfinder chrome — the native camera handles that.
 
 ---
 
