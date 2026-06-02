@@ -421,6 +421,7 @@ Vehicle history shows:
 | **Deposit** | A payment applied before final billing; reduces the balance on the final bill. |
 | **Discount / Promo** | Discount rule, campaign reference. |
 | **Reminder** | PMS reminder linked to customer and vehicle. |
+| **Domain** | Per-tenant hostname(s): the default `{shop}.autolounge.com` plus any verified custom domain (Section 33.8). Fields: `hostname`, `surface` (portal/public), `verified`, `cert_status`. Drives host-aware tenant resolution. |
 | **AuditLog** | All significant state changes (Section 23.1). |
 
 ### 11.2 Identity Resolution (Dedup Problem)
@@ -1264,6 +1265,7 @@ A service-transparency and work-order platform for independent auto shops.
 - Per work order volume (tiered)
 - Setup/onboarding fee (charged separately)
 - Local edge mode as premium add-on
+- **Custom domain as a paid add-on** (Section 33.8)
 
 ---
 
@@ -1280,22 +1282,28 @@ A service-transparency and work-order platform for independent auto shops.
 | Auth | Supabase Auth (JWT carries `tenant_id` + `role` claims) |
 | Tenant isolation | **Postgres Row Level Security (RLS)** keyed on the JWT `tenant_id` claim — primary mechanism |
 | Runtime queries | `supabase-js` (RLS-aware) for app reads/writes |
-| Schema & migrations | Prisma (`prisma migrate`) — migrations only, not the runtime query layer |
+| Schema & migrations | **Supabase CLI** (`supabase migration new` / `db diff`) — plain versioned SQL; RLS, functions, triggers, cron all in one history |
+| Type safety | **`supabase gen types typescript`** — generated types for a fully typed `supabase-js` client |
 | Storage (dev/MVP) | Supabase Storage |
 | Storage (production / scale) | Cloudflare R2 (tenant-prefixed paths + signed URLs) |
 | Realtime | Supabase Realtime (queue board, upload status — RLS-respecting) |
 | Reports | SQL views on PostgreSQL |
 | Styling | Tailwind CSS + shadcn/ui |
+| Background jobs / reminders | `pg_cron` (MVP) → dedicated queue/worker later if volume grows |
 | Notifications (MVP) | Semaphore or Movider (PH SMS) + copy-to-Messenger |
+| App hosting (cloud) | **Vercel** (Next.js apps) + static hosting for the Vite PWA; host-aware middleware resolves tenant |
+| Domains | Default `{shop}.autolounge.com` (wildcard DNS + cert, auto at signup); **custom domain as a paid add-on** (Section 33.8) |
 | Monitoring | Sentry + uptime monitoring |
 | Payments (customer) | Manual in v1 (GCash/bank) — no gateway |
 | Payments (SaaS billing) | PayMongo / Xendit (added when SaaS launches) |
+| Local-edge tier only (deferred) | Docker Compose + Caddy + Cloudflare Tunnel — scoped to the premium local mode, not the cloud default |
 
 **Multi-tenancy model (committed): RLS-first.** All tables include `tenant_id` from day one. Tenant isolation is enforced primarily by **Postgres Row Level Security**, not by application code. The database itself refuses to return another tenant's rows regardless of an application bug — which is the right guarantee for a trust-based product where a single missed filter would be a cross-tenant data leak.
 
 How it fits together:
 
-- **Identity:** Supabase Auth issues the session JWT. Each user's `tenant_id` and `role` are stamped into the JWT as custom claims (set via an auth hook / `app_metadata` on signup). This resolves the earlier Supabase-Auth-vs-Prisma identity conflict: Supabase Auth owns identity; Prisma is used only for schema and migrations, never as the runtime query layer.
+- **Identity:** Supabase Auth issues the session JWT. Each user's `tenant_id` and `role` are stamped into the JWT as custom claims (set via an auth hook / `app_metadata` on signup). Supabase Auth is the single source of truth for identity — there is no second identity store.
+- **No ORM.** We do not use Prisma (or any ORM). Because isolation is RLS-first and queries go through `supabase-js`, an ORM would only ever be a migrations tool — and it cannot express RLS policies, functions, triggers, `pg_cron`, or Realtime config, which would split the schema across two systems. Supabase CLI migrations keep tables *and* all of that in one SQL migration history; `supabase gen types` gives the type safety an ORM would otherwise provide. See the v1.2 → v1.3 changelog note for the full rationale.
 - **Policies:** Every tenant-scoped table has an RLS policy of the form `tenant_id = (auth.jwt() ->> 'tenant_id')::uuid`, plus role-aware policies for finer control (e.g., a mechanic can only `select`/`update` work orders they are assigned to). Customer-portal reads do not use Supabase Auth at all — they go through a token-validating server route (Section 13.2, 27.5) that scopes the query explicitly.
 - **Queries:** App code reads/writes through `supabase-js`, so RLS is always in force. There is no privileged-role bypass path exposed to request handlers. Admin/back-office jobs that legitimately need to cross tenants (support tooling, cron) use the service role behind a server-only boundary, never in user-facing request paths.
 - **Storage:** Photos live under tenant-prefixed paths (`/{tenant_id}/{work_order_id}/...`). R2 has no RLS, so access is gated by issuing short-lived signed URLs from a server route that has already passed the RLS/token check.
@@ -1338,10 +1346,12 @@ Reliability is offered as escalating tiers. **Most shops need only the default**
 
 ### 27.5 Migration Workflow
 
-Schema migrations via Prisma Migrate:
-- `prisma migrate dev` for local development
-- `prisma migrate deploy` applied in CI/CD before each deployment
+Schema migrations via the **Supabase CLI** (plain SQL, versioned in `supabase/migrations/`):
+- `supabase migration new <name>` to author a migration; `supabase db diff` to capture changes made in Studio
+- `supabase db push` applied in CI/CD before each deployment
+- `supabase gen types typescript` regenerated on schema change to keep the typed `supabase-js` client in sync
 - Local Supabase development via `supabase start` (Docker) so developers have isolated instances and do not share a live database
+- One migration history covers everything: tables, RLS policies, functions, triggers, `pg_cron` jobs, and Realtime publications
 
 ### 27.6 Authentication Strategy
 
@@ -1352,7 +1362,7 @@ Schema migrations via Prisma Migrate:
 | New staff onboarding | Email invite link via Supabase Auth invite flow; invited user is auto-stamped with the inviting shop's `tenant_id` |
 | Customer portal | Token-based, **no Supabase Auth and no JWT** — a server route validates the token (+ optional PIN, Section 13.2) and scopes every query to that single work order explicitly, since there is no tenant JWT to drive RLS |
 
-> **Auth/identity decision (resolved):** Supabase Auth is the single source of truth for staff identity. Prisma is used only for migrations. RLS reads the JWT claims for tenant isolation. There is no second identity store to keep in sync.
+> **Auth/identity decision (resolved):** Supabase Auth is the single source of truth for staff identity. RLS reads the JWT claims for tenant isolation. No ORM and no second identity store to keep in sync (Section 27.1).
 
 ---
 
@@ -1516,7 +1526,7 @@ Prove the system can make a real shop job transparent from intake to release —
 2. Run the 2-week paper-baseline study (Section 4.2) to size the real pain before building.
 3. Build the technical spike (Section 28) — do not start the mechanic app without passing this first.
 4. Define the exact MVP screen inventory per surface (count screens, name them, sketch transitions).
-5. Design the Prisma schema for Section 11 entities with relationships.
+5. Design the schema (Supabase SQL migrations) for Section 11 entities — tables, relationships, and RLS policies together.
 6. Design the PMS and brake checklist/photo templates and the template-management UI.
 7. Design the customer tracking portal layout and notification message templates (EN/Taglish).
 8. Define queue tracker UI rules and status-band logic (Section 9.2).
@@ -1593,6 +1603,7 @@ A **Features** settings page where the shop turns capabilities on/off. The produ
 | Auto supply catalog | Off | Catalog pages hidden |
 | Works gallery | Off | Gallery hidden |
 | Multi-mechanic assignment | Off | Single assignee per job |
+| Custom domain (paid add-on) | Off | Customer surfaces use the default `{shop}.autolounge.com` subdomain (Section 33.8) |
 | Multi-branch | Off | Single location (P3) |
 
 **Toggle principles:**
@@ -1604,6 +1615,27 @@ A **Features** settings page where the shop turns capabilities on/off. The produ
 ### 33.7 Why This Matters for SaaS
 
 Onboarding wizard + per-tenant defaults + theming + feature toggles are exactly what turns the bespoke AutoLounge build into a self-serve SaaS later (D1) with no rewrite: a new shop self-provisions, brands itself, and dials in complexity — all without engineering involvement.
+
+### 33.8 Custom Domain (Paid Add-On)
+
+White-labeling is only complete when the customer-facing URL is the shop's own. This extends the per-tenant branding (33.5) from logo+color to the domain itself.
+
+**Two levels, by design:**
+
+| Level | URL | Setup | Tier |
+|-------|-----|-------|------|
+| **Default subdomain** | `{shop-slug}.autolounge.com` | **Automatic at signup** — wildcard DNS (`*.autolounge.com`) + wildcard TLS cert; zero shop effort | Included |
+| **Custom domain** | `shopname.com` / `track.shopname.com` | Shop points a CNAME at the platform; cert auto-provisioned | **Paid add-on** |
+
+**Which surfaces get the custom domain:** the **customer-facing ones** — the tracking portal and the public website/queue page (that's what the shop's customers see). The admin app stays on the platform domain (`app.autolounge.com`); shops don't need to brand their internal tool.
+
+**How it works technically:**
+- **Tenant resolution is host-aware from day one.** Host-aware middleware reads the incoming `Host` header → looks up the `Domain` record (Section 11.1) → resolves the tenant and its theme. Building this for the default subdomain means custom domains are a lookup addition, not a refactor.
+- **Cert automation:** on Vercel, use the **Vercel Domains API** to add the hostname and auto-issue/renew the cert. At larger scale (hundreds+ of custom domains) or if hosting moves off Vercel, **Cloudflare for SaaS (Custom Hostnames)** is the purpose-built alternative — both automate per-hostname certs.
+- **Self-serve onboarding for the add-on:** (1) shop enters their domain in Settings → (2) platform shows the exact DNS record to add → (3) shop adds it at their registrar → (4) platform auto-verifies ownership (TXT/CNAME) and provisions the cert → (5) domain goes live. Status surfaced as `Pending DNS → Verifying → Live`.
+- **Abuse/safety:** domain-ownership verification before activation; guard against dangling-CNAME takeover; certs logged.
+
+**Why it's an add-on, not core:** it carries real per-domain cost and support surface, and most shops are happy on the free subdomain. It's a natural upsell for established shops that want their brand front-and-center — and it's a feature toggle + `Domain` row like everything else, so enabling it is config, not engineering.
 
 ---
 
@@ -1659,3 +1691,16 @@ Onboarding wizard + per-tenant defaults + theming + feature toggles are exactly 
 - **Added Section 27.4 — Network Reliability Tiers:** separated WAN vs LAN problems; made **pure cloud (zero network setup) the default** since modern internet is generally reliable, with the PWA offline queue as the safety net; better Wi-Fi (APs) and a local photo store-and-forward relay are optional add-ons; full local edge stays deferred (P3). Renumbered Migration → 27.5, Auth → 27.6
 - **Updated Section 28 (spike):** native-capture criterion, photo-legibility criterion, run on real worst-bay Wi-Fi and on a phone, client-side compression crash test
 - **Updated Section 12.11:** tethered stylus mitigation for greasy/gloved capacitive touch
+
+### v1.2 → v1.3 (dropped Prisma — Supabase-native tooling)
+
+- **Removed Prisma from the stack.** Rationale: once we committed to RLS-first isolation (queries via `supabase-js`) and Supabase Auth, Prisma's only remaining role was migrations — and it cannot express RLS policies, functions, triggers, `pg_cron`, or Realtime config, which would split the schema across two parallel migration systems. Prisma earns its keep as a *query layer* (Option B), which we did not choose. (If an ORM is ever genuinely wanted, the right one here is Drizzle — SQL-first and RLS-friendly — not Prisma; but it is still not needed.)
+- **Replaced with Supabase-native tooling:** Supabase CLI migrations (one SQL history for tables + RLS + functions + cron + Realtime), `supabase gen types typescript` for a typed `supabase-js` client, Supabase Studio for the GUI. Updated Sections 27.1, 27.5, 27.6, and Section 32.
+- Net effect: fewer moving parts, no split-brain schema, and the generated types are actually used (Prisma's would have been wasted since queries go through supabase-js).
+
+### v1.3 → v1.4 (final stack: hosting + custom domain add-on)
+
+- **Finalized hosting:** Vercel for the Next.js apps + static hosting for the Vite PWA, with host-aware middleware for tenant resolution. Docker + Caddy + Cloudflare Tunnel are now explicitly scoped to the *deferred local-edge tier only*, not the cloud default (Section 27.1).
+- **Added `pg_cron` row** for reminders/background jobs (Section 27.1).
+- **Added Section 33.8 — Custom Domain (paid add-on):** default `{shop}.autolounge.com` subdomain automatic at signup; custom domain (`shopname.com`) as an upsell covering the customer-facing surfaces (tracking portal + public site), with auto-provisioned certs via Vercel Domains API (or Cloudflare for SaaS at scale) and a self-serve DNS-verification flow.
+- **Added `Domain` entity** (Section 11.1) and a custom-domain feature toggle (Section 33.6); added custom domain to SaaS pricing axes (Section 26.3).
