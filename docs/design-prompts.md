@@ -1,438 +1,211 @@
-# ShopTrace — Claude Design Prompts
+# ShopTrace — Frontend Design Briefs
 
-> *ShopTrace* is the product. *AutoLounge* is the example shop shown in the mockups (the shop's own brand appears on customer-facing and admin surfaces via per-tenant theming).
+> *ShopTrace* is the product. *AutoLounge* is the example shop in mockups (each shop's own logo/color themes its surfaces via per-tenant branding).
 
-Use these prompts with Claude or any AI design tool (Canva AI, v0, Figma AI, etc.) to generate UI mockups for each major surface. Each prompt is self-contained and includes context, layout direction, and component detail.
+These are **creative briefs, not specs.** Each one gives you the context, the user, the job-to-be-done, and the features/data that must be present — then hands you the design. You own layout, hierarchy, components, interaction, and visual direction.
 
----
-
-## Prompt 1 — Admin Queue Board (Desktop)
-
-Design a **dark-mode auto shop operations dashboard** — the ShopTrace admin app, here branded for the example shop "AutoLounge." This is the main screen that front-desk staff and managers look at all day.
-
-**Layout:** Full-width desktop. Left sidebar for navigation, main area split into a kanban-style job queue.
-
-**Sidebar navigation items:**
-- Queue Board (active)
-- Work Orders
-- Customers & Vehicles
-- PMS Reminders
-- Reports
-- Settings
-
-**Main area — Kanban columns (left to right):**
-1. **Queued** — vehicles waiting, shows count badge
-2. **In Progress** — actively being worked on
-3. **Waiting Approval** — orange warning badge, "awaiting customer" flag if overdue
-4. **Ready for Release** — green badge
-5. **Released Today** — muted column
-
-**Each job card shows:**
-- Vehicle: e.g., "2019 Toyota Fortuner · ABC 1234"
-- Customer name
-- Service type tag (e.g., "PMS", "Brake Service", "Diagnostics") — color-coded
-- Mechanic avatar/initials
-- Time in current status (e.g., "2h 14m")
-- Priority indicator (high priority = red left border)
-- Photo count: "8/10 photos"
-- Approval badge if waiting (pulsing orange dot)
-
-**Top bar:**
-- Shop status toggle: Open / Busy / Near Closing / Closed — with current estimated wait band (e.g., "Busy · Est. 1.5–2 hrs")
-- Queue pause button
-- "Add Vehicle" primary button
-- Search bar
-- Notification bell
-
-**Color palette:** Dark navy background (#0f172a), card background (#1e293b), accent orange (#f97316) for attention states, green (#22c55e) for ready/released, white text. Tailwind CSS design system, shadcn/ui component style.
-
-**Feel:** Professional, high information density but not cluttered. Similar feel to Linear or GitHub Projects but for a physical shop floor.
+**How to use each brief:**
+- Propose **2–3 distinct directions** for the surface, then iterate on the strongest.
+- Design the **real states**, not just the happy one: empty / first-run, loading, error, offline, and dense/at-capacity.
+- Make **deliberate** hierarchy and information-density choices and say *why*.
+- Treat the visual notes below as a **starting point you may challenge**, not a mandate.
 
 ---
 
-## Prompt 2 — Work Order Creation Form (Desktop / Admin)
+## Shared Context (applies to every brief)
 
-Design a **work order creation modal or full-page form** for the ShopTrace admin app (example shop: AutoLounge). Dark mode, desktop.
+**Product.** ShopTrace makes an auto shop transparent: customers see live status + proof photos of work on their car; staff run job queues, work orders, approvals, payments, and history; owners see the numbers. Built for Philippine shops.
 
-**Form title:** "New Work Order"
+**Who uses it.**
+- **Service advisor / admin** — runs the front desk on a desktop all day; high volume, needs speed and at-a-glance triage.
+- **Mechanic** — works on a tablet or phone in a greasy, dim garage bay with weak Wi-Fi; minimal typing, large targets, camera-first.
+- **Owner / cashier** — oversight, money, reports; trust in the numbers matters.
+- **Customer** — opens a private link on their phone; no app, no login beyond a PIN; may read Taglish.
 
-**Left column — Customer & Vehicle:**
-- Customer search field with autocomplete (shows existing customers by name or phone)
-- "New Customer" inline option if not found
-- Customer name, contact number fields
-- Vehicle search (by plate number — primary) with autocomplete
-- "New Vehicle" inline option
-- Vehicle fields: Make, Model, Year, Plate Number, VIN (optional)
-- Mileage at intake (required, numeric)
-- Fuel level selector (E — ¼ — ½ — ¾ — F) as a visual gauge
-- Existing damage notes (text area with a small note: "document scratches, dents before work begins")
-- Intake photo upload area (drag-drop or camera capture)
+**Brand feel.** Competent and trustworthy, modern but warm, distinctly Filipino (Taglish-comfortable), and *proof/transparency-forward* — the product's whole promise is "see what's really happening to your car." Avoid sterile-enterprise and avoid toy-cute.
 
-**Right column — Job Details:**
-- Service type selector (dropdown with icons): PMS/Change Oil, Brake Service, Diagnostics, General Repair, Suspension, Battery, Tires/Mags, Mods/Upgrades, Detailing, Other
-- Customer complaint/request (text area, required)
-- Initial notes (text area, optional)
-- Priority selector: Normal / High / Urgent (with color indicators)
-- Assign mechanic (avatar list, multiple select for multi-mechanic jobs)
-- Intake source: Walk-in / Messenger / Phone / Website / Repeat Customer — radio/pill selector
-- Estimated completion time (date/time picker, optional)
-- Customer waiting: Yes / No / Leaving vehicle — toggle
-- Consent checkboxes: "May send service reminders" and "May send promos" (separate, per DPA)
+**Visual starting point (challenge it if you have a better idea).** A confident dark "automotive" feel for the staff/admin surfaces; lighter, reassuring surfaces for customer-facing pages; a warm accent (amber/orange works) for primary actions and attention states; green/amber/red for status. Tailwind + shadcn/ui is the build system, so lean on real, implementable components.
 
-**Bottom:**
-- "Create Work Order & Print" secondary button
-- "Create Work Order & Send Tracking Link" primary button
+**PH realities to design around.** Weak/intermittent Wi-Fi; affordable Android tablets; GCash / bank transfer / cash; walk-ins and Messenger; Taglish; one person sometimes wearing several role hats.
 
-**Style:** Card-based layout, clear section dividers, shadcn/ui Form components, Tailwind. Required fields marked with a subtle asterisk. Orange accent for primary actions.
+**Principles.** KISS and progressive disclosure (features are toggleable — design for graceful presence/absence). Faster than paper where it matters. Big touch targets and camera-speed for mechanics. Mobile-first and trust-building for customers. Per-tenant theming (logo + color) on every surface.
 
 ---
 
-## Prompt 3 — Mechanic Tablet Checklist App (Mobile/Tablet)
+## Brief 1 — Admin: Queue Board & Intake Funnel
 
-Design a **mobile-first PWA screen** for a mechanic working on a vehicle job in an auto shop. This is shown on an affordable Android tablet (10-inch screen). The mechanic may have grease on their hands.
+**Platform:** desktop web. **User:** service advisor, all day, high glance-frequency.
 
-**Screen: PMS Job In Progress**
+**Job to be done.** Let the advisor see the whole shop at a glance and move work forward without hunting — *who's waiting, who's being worked on, who's blocked, who's ready, who needs me.*
 
-**Top bar:**
-- Back arrow
-- Work order number (e.g., "WO-2024-0347")
-- Vehicle info: "2018 Honda Civic · XYZ 5678"
-- Mechanic name: "Carlo R."
+**Must surface:**
+- Jobs across their lifecycle (queued → in progress → waiting on approval → final check → ready → released), with the vehicle, customer, service type, assigned mechanic(s), time-in-status, priority, and a photo-progress signal.
+- A **"Pending Intake"** stream — walk-ins, website/Messenger inquiries, and bookings awaiting triage — that the advisor accepts (→ becomes a work order) or declines.
+- Shop status control (open / busy / closed) and the current public wait band.
+- Attention cues for blocked / waiting-on-customer / overdue-approval jobs.
+- Entry to **global search** and the **action center**.
 
-**Job header card:**
-- Service type badge: "PMS / Change Oil" (orange)
-- Mileage: "87,450 km"
-- Customer concern: "Regular change oil, check tires"
-- Status badge: "In Progress"
-
-**Photo progress bar:**
-"Required photos: 3 of 4 done" — thick progress bar, orange fill, large text
-
-**Checklist (scrollable):**
-Each checklist item is a large touch target (minimum 64px height):
-- Green checkmark circle + strikethrough text = Done
-- Empty circle + bold text = Pending
-- Orange warning icon = Needs Attention
-- Grey diagonal slash = Not Applicable
-
-Show a few done items and a few pending items mixed. Include:
-- ✓ Odometer photo — Done — small thumbnail preview of the photo
-- ✓ Engine bay before — Done
-- ○ Oil draining — **[Required] Take Photo** button (large, orange camera icon)
-- ○ New oil + filter — **[Required] Take Photo** button
-- ○ Air filter check — Take Photo (optional — grey button)
-- ○ Fluid levels — Take Photo (optional)
-- △ Brake pad check — Needs attention (tapped open to show sub-note: "Front pads at 20%")
-
-**Sticky bottom bar:**
-- "Add Issue Found" button (left, outlined)
-- "Mark Job Done" button (right, primary orange — disabled/greyed out because 1 required photo is missing, with tooltip "1 required photo remaining")
-
-**Style:** Very large text and buttons. High contrast. Minimal chrome. Camera icon should be instantly obvious. Orange for required actions. Dark mode. No tiny UI elements — mechanics will tap this with dirty thumbs.
+**Explore.** How to show a busy shop (20+ jobs) without overwhelm; kanban vs lanes vs list vs hybrid; how walk-in vs booked vs online intake visually differ; how "this job is stuck" jumps out. Design the empty (first-day) and at-capacity states.
 
 ---
 
-## Prompt 4 — Mechanic Photo Step Screen (Mobile/Tablet)
+## Brief 2 — Admin: Work Order (create + detail)
 
-> **Capture method note:** The app uses the **device's native camera** (`<input type="file" capture>`), not a custom in-app viewfinder — this is more reliable and produces better photos on cheap tablets in poor bay lighting (PRD §12.12). So this screen is the *step screen that launches the native camera and shows the result*, NOT a custom viewfinder. Design accordingly.
+**Platform:** desktop web. **User:** advisor creating intake and managing a job end-to-end.
 
-Design a **photo-step screen** for the mechanic app. The mechanic is on a required checklist step and needs to capture a photo. Tapping the capture button opens the phone/tablet's native camera; this screen shows the guidance before and the captured result after.
+**Job to be done.** Capture a new job fast (recognizing returning customers, not re-keying), then serve as the job's home — everything about it in one place.
 
-**Top bar:**
-- Back/cancel (X) — top left
-- Step name in large text: "Step 4 of 10 — Oil Draining"
-- Required badge: "REQUIRED" in orange pill
+**Must support:**
+- **Fast intake:** find-or-create customer & vehicle (search by plate/phone/name with returning-customer recognition; handle plate-less/conduction-sticker cars; allow a quick/anonymous walk-in). Capture mileage, service type, complaint, intake photos, priority, source, consent.
+- **Job home (detail):** status & timeline, assigned mechanic(s), checklist progress, mechanic photos (with review state), estimate/bill, payment status, the customer message thread, and audit trail.
+- One-tap **send tracking link** and **print job order**.
+- Respect that pricing/scope edits are gated to trusted roles, and a released job is locked.
 
-**Reference image card (the guide):**
-- A clean example photo of what a good "oil draining" shot looks like, labelled "Take a photo like this"
-- Short instruction line: "Capture the oil draining from the pan, clearly in frame"
-
-**Primary action:**
-- Large orange button with camera icon: **"Open Camera"** (launches native camera) — full width, minimum 64px tall
-
-**After capture — result state:**
-- Large thumbnail of the photo just taken
-- "Retake" (outlined) and "Use This Photo" (primary) buttons
-- Upload status chip: "Saved · uploading… 60%" with a subtle progress bar
-- Note: "Photo is saved to this job even offline — it will upload automatically"
-
-**If upload fails:** Red banner — "Upload failed · will retry automatically" with a manual "Retry now" button
-
-**Style:** Dark mode. Everything large and finger-friendly (dirty thumbs). No text smaller than 16px. The reference image and the captured result are the two hero elements. No live-viewfinder chrome — the native camera handles that.
+**Explore.** Modal vs full-page intake; how much to show on create vs progressively reveal; how the detail view balances "many tabs of data" against a single scannable surface; how returning-customer recognition appears mid-typing.
 
 ---
 
-## Prompt 5 — Customer Tracking Portal (Mobile)
+## Brief 3 — Admin: Action Center
 
-Design a **mobile web customer-facing tracking page** for an auto shop. This is a private link the customer opens on their phone — no app install required. Light mode.
+**Platform:** desktop web (and a compact view worth considering for mobile). **User:** advisor/owner — the first screen opened each morning.
 
-**Screen: Job In Progress — Waiting for Approval**
+**Job to be done.** A single "**what needs me right now**" surface so nothing slips: approvals waiting (incl. timed-out escalations), payments to verify, unread customer messages, reminders due, pending intake, outstanding balances to chase, blocked jobs.
 
-**Top:**
-- Shop logo and name: "AutoLounge"
-- Tagline: "Your vehicle is in good hands."
-
-**Job summary card:**
-- Vehicle: "2019 Toyota Fortuner · ABC 1234"
-- Service: "PMS / Change Oil"
-- Work order: "WO-2024-0347"
-- Status badge: "Waiting for Your Approval" (orange)
-
-**Status timeline (vertical step indicator):**
-Steps listed vertically with connecting line:
-- ✓ Received — Jun 2, 8:30 AM
-- ✓ For Inspection — Jun 2, 9:05 AM
-- ✓ Inspection Complete — Jun 2, 9:47 AM
-- ▶ **Waiting for Your Approval** — Action needed (pulsing orange dot)
-- ○ In Progress
-- ○ Final Checking
-- ○ Ready for Release
-
-**Issue Found — Action Required card (prominent, orange border):**
-Title: "Front Brake Pads Need Replacement"
-Description: "During inspection, our mechanic found that your front brake pads are worn down to about 20%. For your safety, we recommend replacing them now while the vehicle is already in our shop."
-Photo thumbnail (brake pad close-up photo)
-Recommended action: "Replace front brake pads and rotors"
-Additional cost: **₱ 3,800**
-
-**Action buttons:**
-- "Approve (+₱3,800)" — large primary orange button
-- "Decline for now" — outlined button
-- "Ask a question" — text link
-
-**Proof photos section:**
-Title: "Service Photos"
-2-column photo grid showing approved photos:
-- "Before — Engine bay"
-- "Odometer: 87,450 km"
-- "Oil drain" (with timestamp watermark)
-- "New filter installed"
-
-**Style:** Clean, trustworthy, white/light grey background. Orange (#f97316) for action items. Rounded cards with subtle shadows. Nunito or Inter font. Very readable on a phone screen. Must feel like a professional service, not a system printout.
+**Explore.** Prioritization and grouping (by urgency? by type? by money-at-risk?); how an item is actioned inline vs deep-links to the job; how it feels rewarding to clear it (the "inbox zero" feeling); what it looks like when there's nothing to do. This is a retention surface — make opening it feel useful.
 
 ---
 
-## Prompt 6 — Customer Tracking Portal — Payment Screen (Mobile)
+## Brief 4 — Mechanic: Job List & Checklist (the highest-risk surface)
 
-Design a **mobile web payment screen** within the customer tracking portal. The job is complete and the customer is ready to pay.
+**Platform:** tablet/phone PWA, used one-handed with greasy/gloved hands in a dim bay on weak Wi-Fi. **User:** mechanic.
 
-**Top:**
-- Status badge: "Ready for Release ✓" (green)
-- Vehicle: "2019 Toyota Fortuner · ABC 1234"
+**Job to be done.** Guide the mechanic through a job like a photo checklist — *faster than paper* — with zero confusion about what's required to finish.
 
-**Final Bill card:**
-White card, clean line items:
-```
-PMS / Change Oil          ₱ 1,200
-  └ Castrol Magnatec 10W-40 × 4L  ₱   800
-Brake Pad Replacement     ₱ 2,400
-  └ Brembo Front Pads × 1 set     ₱ 1,400
-                         ————————
-Subtotal                  ₱ 5,800
-Deposit applied          −₱   500
-Regular customer (5%)    −₱   265
-                         ————————
-TOTAL DUE                 ₱ 5,035
-```
+**Must support:**
+- Today's assigned jobs; start a job; see vehicle, mileage, the customer's concern (incl. any customer-supplied photos/video), the checklist, and required vs optional photos.
+- Checklist item states (done / needs-attention / N-A / blocked), a **clear "X of Y required photos done"** gate on finishing, and an explicit reason when a required photo is skipped.
+- **"Issue found"** capture (severity, description, photos, recommended action) sent to admin.
+- **Offline truth:** always-visible connection state and an **"N not synced"** indicator; per-photo queued/uploading/synced/failed; nothing silently lost.
 
-**Payment instructions section:**
-Title: "How would you like to pay?"
+**Constraints.** Huge touch targets, minimal typing, instant camera, high contrast, legible in sunlight and in a dark bay. The photo step launches the **native camera** (not a custom viewfinder) — design the step screen that shows a reference example before and the result after.
 
-Payment option tabs: Cash · GCash · Bank Transfer
-
-**GCash tab (active):**
-- GCash QR code image (centered)
-- GCash number: 09XX-XXX-XXXX
-- Account name: AutoLounge
-- Amount to send: **₱ 5,035**
-
-**Upload proof section:**
-- "Done paying? Upload your proof of payment"
-- Large dashed upload area: camera icon + "Take a screenshot photo" text
-- Reference number input field: "Enter GCash reference number"
-- "Submit Payment" primary button
-
-**Small note at bottom:** "Our staff will verify your payment and contact you when your vehicle is ready for release."
-
-**Style:** Light mode, clean financial layout. Green accent for the positive "ready" status. Orange for CTAs. Trust signals: shop name, clear amounts, human-language instructions. No jargon.
+**Explore.** How to make "what's left to finish" unmistakable; how required vs optional reads at a glance; how blocked/waiting-for-approval looks while the mechanic moves on; the offline and failed-upload states. Iterate hard here — this is the make-or-break UX.
 
 ---
 
-## Prompt 7 — Admin Photo Review Screen (Desktop)
+## Brief 5 — Mechanic: Issue Found & Scan Upload
 
-Design a **photo review screen** for admin staff to approve mechanic photos before they are visible to the customer. Desktop, dark mode.
+**Platform:** tablet/phone PWA. **User:** mechanic, mid-job, hands busy.
 
-**Layout:** 2-column. Left = work order sidebar, Right = photo review area.
+**Job to be done.** Let a mechanic flag a newly discovered problem (or upload a diagnostic/OBD scan) in seconds, with enough for the advisor to price it and the customer to understand it — without the mechanic typing a paragraph.
 
-**Left sidebar:**
-- Work order: "WO-2024-0347"
-- Vehicle: "2018 Honda Civic · XYZ 5678"
-- Mechanic: "Carlo R."
-- Service: "Brake Service"
-- Status: "Final Checking"
-- Checklist progress: "10/10 items done"
-- Photo count: "12 photos taken"
+**Must support:** severity, short description, photos/short video, recommended action, parts needed; tag media internal-only vs customer-visible; pricing left to the advisor by default.
 
-**Right area — Photo Review:**
-
-**Top bar:**
-- "Photo Review" heading
-- "12 photos — 8 pending review"
-- "Approve All" button (primary, orange) and "Send to Customer" button (green)
-
-**Photo grid (3 columns):**
-Each photo card:
-- Large photo thumbnail
-- Step label: "Step 3 — Brake pad removed"
-- Timestamp: "Jun 2, 10:23 AM"
-- Mechanic: "Carlo R."
-- Visibility toggle: "Internal" (grey) ↔ "Customer Visible" (orange/green) — with clear toggle UI
-- Individual Approve / Hide buttons
-
-Show a mix of states:
-- Some already approved (green "Visible to Customer" badge)
-- Some pending (orange "Pending Review" badge)
-- One with "Internal only" flag (red/grey "Hidden from Customer")
-
-**Below the grid:**
-"Gallery eligible photos" section — show 2 beauty shots with a "Promote to Works Gallery" button on each (requires separate customer consent)
-
-**Style:** Dark mode. Photo-heavy layout, card-based. Orange toggles for visibility control. Clear visual distinction between internal and customer-visible states. Feels like a content moderation tool, not just a gallery.
+**Explore.** Minimizing typing (presets, voice, templates); how severity is chosen fast; how the mechanic trusts it was sent. Design for the reality that a thorough issue report is what earns the upsell — but the mechanic won't do it if it's slow.
 
 ---
 
-## Prompt 8 — Public Queue Page (Mobile)
+## Brief 6 — Customer: Tracking Portal (status + proof)
 
-Design a **public-facing queue status page** for an auto shop that customers check before visiting. Mobile-first, light mode. This page requires no login.
+**Platform:** mobile web, opened from a private link, no app, optional PIN, possibly in Taglish. **User:** the car owner, anxious about their car and their bill.
 
-**Header:**
-- Shop logo and name: "AutoLounge"
-- Address + "Get Directions" link
-- Operating hours: "Open · Mon–Sat 8:00 AM – 6:00 PM"
+**Job to be done.** Answer "**what's happening to my car right now?**" with confidence and proof — and make the shop feel professional and trustworthy.
 
-**Queue status card (hero, prominent):**
+**Must surface:** the shop's brand; vehicle & job summary; a status timeline; simplified checklist progress; **approved proof photos** by stage (before / during / parts replaced / completed / final); and a way to message the shop.
 
-Large status indicator:
-🔴 **BUSY**
-
-Below:
-"Several vehicles ahead"
-"Est. wait: 1.5 – 2 hours"
-"Best time to visit: after 3:00 PM"
-
-Small text at bottom of card: "Updated 4 minutes ago"
-
-**Service lanes:**
-Two cards side by side:
-- **Quick Services (PMS/Oil)** — "2 ahead · ~45 min"
-- **Major Repairs** — "3 ahead · ~2–3 hrs"
-
-**"Message Before Visiting" CTA section:**
-Prominent button: "Message Us on Messenger" (Facebook Messenger blue)
-Sub-text: "Ask about your specific service or reserve a slot for tomorrow"
-
-**Recent updates / transparency strip:**
-Small activity feed:
-- "A vehicle was released 12 min ago"
-- "2 vehicles currently being serviced"
-- "Shop accepted 8 vehicles today"
-
-**About the shop section:**
-- Short description
-- Service icons (PMS, Brakes, Diagnostics, Mods, etc.)
-- "See all services" link
-- Map thumbnail
-
-**Footer:**
-Phone number · Messenger link · Instagram link
-
-**Style:** Clean, minimal, mobile-optimized. Large readable status. Green/orange/red for status bands. Feels like checking a restaurant wait time, not a corporate website. Trustworthy and real-time feeling (with the "updated N min ago" label).
+**Explore.** How to make proof photos the hero without overwhelming; how status feels alive and reassuring (not a cold system log); EN/Taglish; how it reads to someone who has never seen the app and is mildly worried about money. Design the early state (just received) and the rich state (lots of photos).
 
 ---
 
-## Prompt 9 — PMS Reminder Queue (Desktop / Admin)
+## Brief 7 — Customer: Approvals & Estimate
 
-Design a **PMS reminder management screen** for admin staff. Desktop, dark mode.
+**Platform:** mobile web. **User:** car owner deciding whether to approve extra work or an upfront repair quote.
 
-**Layout:** Table-based with action sidepanel.
+**Job to be done.** Present found issues / estimates clearly and *non-alarmingly*, with the proof and the cost, so the customer can confidently **approve, decline, or ask a question** from their phone.
 
-**Page title:** "PMS Reminders Due"
-**Filter tabs:** All Due · Overdue · Due This Week · Due This Month · Sent
+**Must support:** per-issue title, simple explanation, photos, recommended action, added cost; clear running total; approve / decline-for-now / ask-a-question; capture of who approved + when. Also the up-front "approve before we start the repair" case.
 
-**Table columns:**
-- Customer name (linked)
-- Vehicle (make/model/year · plate)
-- Last PMS date
-- Last mileage
-- Due date (color-coded: red = overdue, orange = this week, grey = this month)
-- Due mileage
-- Status (Pending / Sent / Snoozed)
-- Last contacted
-- Actions
-
-**Each row action:**
-- "Copy Messenger Message" button (copy icon)
-- "Copy SMS Message" button
-- "Mark as Sent" dropdown
-- "Snooze" (3 days / 1 week / 2 weeks)
-
-**Right panel (when row selected):**
-Shows the pre-written reminder message in both English and Taglish:
-
-**English template:**
-> "Hi [Customer Name]! This is AutoLounge. Your [Vehicle] is due for a PMS / change oil. Based on your last visit ([Date], [Mileage] km), we recommend coming in around [Due Date] or before [Due Mileage] km. Come visit us at [Address]. See you soon!"
-
-**Taglish template:**
-> "Hi [Customer Name]! Ito po si AutoLounge. Pwede na po mag-PMS ang inyong [Vehicle]. Noong [Date], [Mileage] km na ang nakalagay. Preperably po bago mag-[Due Mileage] km o bago mag-[Due Date]. Abangan na po kayo namin dito sa [Address]. Salamat!"
-
-"Copy Message" buttons for both.
-
-**Summary strip at top:**
-- "47 reminders due this month"
-- "12 overdue"
-- "23 sent this month"
-
-**Style:** Table-heavy but with clear hierarchy. Red/orange urgency indicators. Copy-to-clipboard is the primary action — it should feel extremely fast to scan the list and fire off reminders.
+**Explore.** Building trust at the moment money is on the line; making "decline" feel safe (not pushy); how multiple issues are reviewed and approved individually vs together; the just-asked-a-question waiting state.
 
 ---
 
-## Prompt 10 — Owner/Manager Reports Dashboard (Desktop)
+## Brief 8 — Customer: Final Bill, Payment & Release
 
-Design a **reports and analytics dashboard** for the shop owner or manager. Desktop, dark mode.
+**Platform:** mobile web. **User:** car owner paying and picking up.
 
-**Layout:** Top KPI strip + chart area + recent activity.
+**Job to be done.** Show a clear final bill and make paying (GCash / bank / cash) and proving payment effortless — then a clean release sign-off.
 
-**Page title:** "Reports — June 2024"
-**Date range picker** in top-right.
+**Must support:** itemized bill with deposits applied, discounts, VAT where relevant, balance; payment instructions incl. **GCash QR**; upload proof of payment + reference number; partial/"pay later" where the shop allows; release acknowledgment.
 
-**Top KPI strip (4 cards):**
-1. **Total Jobs This Month** — 124 completed / 8 in progress — up 12% vs last month
-2. **Revenue This Month** — ₱ 186,500 — bar indicator vs monthly target
-3. **Pending Payments** — ₱ 14,200 — 3 jobs — orange warning
-4. **PMS Reminders Sent** — 34 of 47 due — "13 still pending" in orange
+**Explore.** Making the total unambiguous and trust-building; the GCash flow with the least friction; how "submitted, waiting for the shop to verify" reassures; the paid-and-released celebratory end state.
 
-**Charts section (2 columns):**
+---
 
-Left — **Jobs by Service Type** (donut chart):
-- PMS / Change Oil: 41%
-- Brake Service: 18%
-- Diagnostics: 14%
-- Mods/Upgrades: 12%
-- Other: 15%
+## Brief 9 — Admin: Estimate & Billing Builder (with price catalog)
 
-Right — **Weekly job volume** (bar chart, last 4 weeks):
-- Bars colored by completion rate (green = released, orange = in progress, grey = cancelled)
+**Platform:** desktop web. **User:** advisor/manager building a quote or final bill.
 
-**Bottom section — Recent reports table:**
-- Work Orders (last 30 days) — CSV · PDF buttons
-- Payment Summary — CSV button
-- PMS Due Customers — CSV button
-- Declined Recommendations — CSV button
+**Job to be done.** Assemble an accurate estimate/bill in seconds by pulling from a **reusable price catalog** (services + common parts with default prices), not retyping — while keeping price/discount edits within trusted roles.
 
-**Right sidebar — Activity feed:**
-- Most recent status changes across all active jobs
-- Pending approval alerts (orange)
-- Unpaid jobs (red)
-- "3 jobs waiting for customer approval — view all" action link
+**Must support:** pick catalog items (editable per job), labor/parts/supplies lines, deposits, discounts (with above-threshold approval and senior/PWD recording), VAT setting, running total; clear separation of estimate vs final bill; the "Not an Official Receipt" reality.
 
-**Style:** Data-rich but scannable. KPI cards with trend arrows. muted dark background with sharp white data labels. Green/orange/red semantic colors. Chart colors should be distinct but not harsh. Feels like a real ops dashboard, not a toy.
+**Explore.** Fast catalog search/add; how overrides that need manager approval are surfaced; keeping a dense financial screen calm and error-resistant.
+
+---
+
+## Brief 10 — Admin: Photo Review & Customer Messaging
+
+**Platform:** desktop web. **User:** advisor controlling what the customer sees and answering questions.
+
+**Job to be done.** Two linked jobs: (a) review mechanic photos and decide customer-visible vs internal before the customer sees them, incl. promoting beauty shots to the works gallery; (b) handle the **two-way message threads** customers start from the portal.
+
+**Must support:** photo grid with visibility toggles and per-step labels; clear internal vs customer-visible states; unread message threads tied to their work order, reply with EN/Taglish templates.
+
+**Explore.** Fast bulk approval vs careful per-photo control; how messaging lives alongside the job without becoming a separate inbox to babysit.
+
+---
+
+## Brief 11 — Owner: Reports & Multi-Shop Dashboard
+
+**Platform:** desktop web. **User:** owner/manager — wants confidence in the numbers, across one or several branches.
+
+**Job to be done.** Show the health of the business — revenue, jobs, completion time, rework rate, payments, outstanding balances — for a single shop and, for multi-branch owners, **across branches with comparison** — in a way the owner *trusts*.
+
+**Must support:** KPI summary; trends; by-service-type and by-branch breakdowns; drill-down to underlying jobs; pending-money callouts. Convey that the numbers are trustworthy because inputs are controlled/audited (without lecturing).
+
+**Explore.** What an owner checks in 10 seconds vs explores deeply; single-shop vs multi-branch views (one design that scales from 1 to N branches); making "you have ₱X uncollected" impossible to miss. Design the single-shop default and the multi-branch benchmarking view.
+
+---
+
+## Brief 12 — Onboarding Wizard & Branding
+
+**Platform:** desktop web. **User:** a shop owner signing up — possibly not very technical — who must reach "first real work order" fast.
+
+**Job to be done.** Get a shop from sign-up to *running on good defaults* in minutes — pick services (which seeds checklists/templates), upload a logo and get instant theming, optionally invite staff and import existing customers — every step skippable.
+
+**Must support:** minimal sign-up; a short, skippable wizard; logo upload with auto-suggested brand color and live preview; service selection; CSV import (map → preview → import); a "you're set, create your first work order" finish; a re-openable setup checklist.
+
+**Explore.** Making it feel effortless and low-commitment (nothing blocks usage); the live branding preview; how skipping still leaves the shop fully usable. Reinforce the "no-brainer to adopt" promise.
+
+---
+
+## Brief 13 — Public Website & Queue Page
+
+**Platform:** responsive web, mobile-first. **User:** a prospective or returning customer deciding whether/when to visit.
+
+**Job to be done.** Make the shop look credible and answer "is it worth going now?" — and funnel people into an inquiry/booking.
+
+**Must support:** shop identity, services, a works gallery (proof), and a **live queue/wait page** showing a status band + estimated wait + "best time to visit," plus a "message us" / inquiry CTA that lands as Pending Intake. (Full content spec in `website-prd.md`.)
+
+**Explore.** A homepage that earns trust in 5 seconds; a queue page that feels live and honest (incl. a "may be outdated" state); the enthusiast-pleasing gallery. Per-tenant brandable.
+
+---
+
+## Cross-Cutting Asks (apply judgment across all briefs)
+
+- **States:** design empty/first-run, loading, error, offline, and dense/at-capacity for each surface — not just the happy path.
+- **Theming:** every surface is per-tenant brandable (logo + color). Show how a surface looks under two different shop brands if useful.
+- **Localization:** customer-facing surfaces should work in English and Taglish.
+- **Accessibility:** sensible contrast and scalable text, especially on the customer portal and the in-bay mechanic app.
+- **Feature toggles:** features can be off — show how a surface degrades gracefully when, e.g., proof photos, messaging, or payments are disabled.
+- **Iterate:** for the high-risk surfaces (mechanic checklist, customer portal, action center, multi-shop dashboard), bring more than one direction and a short rationale.
