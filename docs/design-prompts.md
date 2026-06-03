@@ -10,6 +10,26 @@ These are **creative briefs, not specs.** Each one gives you the context, the us
 - Make **deliberate** hierarchy and information-density choices and say *why*.
 - Treat the visual notes below as a **starting point you may challenge**, not a mandate.
 
+**What context to give the design agent.**
+- For a quick concept, **this file alone is enough** — the Shared Context block below makes each brief self-contained. You can even hand over a single brief plus that block.
+- For production-accurate screens, pair the brief with **its one matching PRD section** (table). Don't dump the full PRD or the consumer-app / integration-api / planning-status docs — that's noise for UI work.
+
+| Brief | Pair with (in `prd.md` unless noted) |
+|-------|--------------------------------------|
+| 1 Queue Board & Intake | §9, §10.6, §10.8, §35 |
+| 2 Work Order | §10 (esp. 10.2, 10.7) |
+| 3 Action Center | §35, §14.6 |
+| 4 Mechanic Checklist | §12 (esp. 12.3–12.6, 12.11–12.13) |
+| 5 Issue Found & Scan | §12.8, §12.9 |
+| 6 Customer Portal (status/proof) | §13, §19 |
+| 7 Approvals & Estimate | §13.3, §15 |
+| 8 Bill, Payment & Release | §13.3, §16 |
+| 9 Estimate & Billing Builder | §15.7, §16 |
+| 10 Photo Review & Messaging | §13/§10.5, §14.4, §8.4 |
+| 11 Reports & Multi-Shop | §20, §36 |
+| 12 Onboarding & Branding | §33 |
+| 13 Public Website & Queue | `website-prd.md`, §9 |
+
 ---
 
 ## Shared Context (applies to every brief)
