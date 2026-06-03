@@ -1,6 +1,6 @@
 # ShopTrace — Product Requirements Document
 
-**Version:** 1.7  
+**Version:** 1.8  
 **Date:** 2026-06-02  
 **Status:** Authoritative — Section 0 decisions confirmed  
 **Source:** Merged from v1 draft + v2 revision  
@@ -80,6 +80,15 @@ If A1 or A3 fail, the product needs rethinking, not more features. These are exp
 2. Run a **2-week paper-baseline study** at AutoLounge — count update messages and time spent.
 3. Pilot the MVP on **real jobs at one shop** for 4 weeks; measure against Section 4.1.
 4. Only then decide SaaS packaging (D1) with evidence.
+
+### 4.3 Metrics Instrumentation (new — you can't measure 4.1 without it)
+
+The success metrics in 4.1 are unmeasurable unless the events are captured. Instrument from day one:
+
+- **Event tracking** for the key funnel moments: `tracking_link_sent`, `tracking_link_opened`, `approval_sent`, `approval_answered_in_portal` vs `answered_offline`, `payment_proof_uploaded`, `job_released`, `reminder_sent`. These directly compute adoption, approval-loop, and update-reduction metrics.
+- **Status-change timestamps** already feed completion-time and status-accuracy (10.3, 20). 
+- **Lightweight, privacy-respecting:** first-party event log in Postgres (not a third-party tracker that leaks PII); Sentry for errors only.
+- A small **metrics view/dashboard** so the pilot can be read against 4.1 without manual log-digging.
 
 ---
 
@@ -429,6 +438,17 @@ Three intake paths converge into one funnel so nothing is lost between "customer
 - **Conversion is tracked:** the `Inquiry` links to the `WorkOrder` it became (status `converted`), so source-to-job reporting is possible (which channel produces real jobs).
 - **Booking day-of check-in (resolves G6):** on the scheduled day, a confirmed booking is promoted from Pending Intake into the active queue with one tap.
 
+### 10.7 Intake UX Details (resolves G11, G22; new gaps)
+
+- **Returning-customer recognition (G11):** as staff type a plate/phone/name, matches surface inline — "Returning customer: Juan dela Cruz · 2 vehicles." One tap pulls the customer + their vehicles + history, instead of re-keying. Built on the dedup search in 11.2.
+- **One customer, two vehicles in the shop at once (G22):** a customer can have multiple concurrent open work orders; the queue and customer view show each vehicle as its own job; tracking links are per work order.
+- **Plate-less vehicles (new):** PH new cars use a **conduction sticker** before plates are issued. Capture conduction sticker as an alternate vehicle key when plate is absent; reconcile to the real plate later via the merge tool (11.2).
+- **Quick / anonymous walk-in (new):** a minimal work order can be created with just a name and contact for a fast job (e.g., a quick top-up), deferring full customer/vehicle records. Tracking and reminders are optional for these.
+
+### 10.8 Global Search (new gap)
+
+A persistent search across **work orders, customers, vehicles (plate/VIN), and inquiries** is core daily UX — "find that Fortuner from last week" must be one action. Implement with Postgres full-text + trigram (fuzzy plate/name match). Available to all staff roles; results are tenant-scoped by RLS.
+
 ---
 
 ## 11. Data Model
@@ -452,6 +472,8 @@ Three intake paths converge into one funnel so nothing is lost between "customer
 | **Photo** | Linked to a job and optionally a checklist item. Visibility flag: internal-only vs customer-visible. |
 | **Issue** | Discovered during inspection. Linked to work order. Goes through admin review before customer sees it. |
 | **Estimate / LineItem** | Labor, parts, supplies, discounts. Estimate has an approval state (Section 15.6). |
+| **ServiceCatalogItem** | Per-tenant price-book entry (service/part, default price, category). Estimates pick from these (Section 15.7). |
+| **EventLog** | First-party product events for success-metric instrumentation (Section 4.3). Distinct from `AuditLog`. |
 | **Approval** | Linked to issue or estimate. Records customer response, timestamp, IP, typed name. |
 | **Thread / Message** | A two-way message thread scoped to a `WorkOrder` (Section 14.4). Each message has a direction (customer ↔ shop), author, timestamp, channel. |
 | **Payment** | Amount, method, reference number, proof photo, verified by, timestamp. Multiple payments roll up against a work order balance (Section 16.8). |
@@ -644,6 +666,12 @@ For jobs split across technicians:
 
 **Pipeline ordering (no silent loss).** Capture → compress client-side (resize ~1600px long edge, ~0.7 quality; test for crashes on low-RAM tablets) → **write to IndexedDB before the UI confirms capture** → enqueue → upload → remove from queue **only after server ack**. Retry fires on three triggers: Background Sync, app foreground, and the `online` event — never Background Sync alone.
 
+### 12.13 Offline UX & Job Handoff (resolves G17, G15)
+
+- **Offline UX (G17):** the mechanic always sees connection state and a persistent **"N items not yet synced"** indicator; each photo shows queued / uploading / synced / failed. On reconnect, the queue drains automatically with visible progress. The mechanic is never blocked from continuing.
+- **Job handoff / overnight job (G15):** a job can be **reassigned** or **shared** to another mechanic (multi-mechanic, 12.10). Handoff records who owns it now; the incoming mechanic sees what's done vs pending and the prior mechanic's photos/notes. Overnight jobs simply persist with their state; an end-of-day view shows jobs carried over.
+- **Approval → resume (G16):** when admin approves added work or an estimate, the assigned mechanic gets a "cleared to continue" notification and the step unblocks (15.6).
+
 ---
 
 ## 13. Customer Tracking Portal
@@ -825,6 +853,12 @@ Full Messenger API integration is **possible but constrained**, so it is scoped,
 - **Never use Messenger for cold PMS reminders → use SMS** (Section 17).
 - **Per-tenant setup cost:** each shop connects its own Facebook Page (OAuth, page tokens, Meta app review). Flag this as real, ongoing maintenance before committing.
 
+### 14.6 Notification Reliability (resolves G13, G7)
+
+- **Send-failure handling (G13):** every send has a status (`sent / delivered / failed`). On SMS failure, staff are prompted in the Action Center with a one-tap **fallback to copy-to-Messenger** (or retry). No message silently fails.
+- **Tracking-link non-open follow-up (G7):** if a tracking link is unopened after a configurable window and the job needs the customer's attention (e.g., approval pending), it surfaces in the Action Center as "customer hasn't opened link — follow up." This reuses the escalation pattern (14.2) for the link itself, not just approvals.
+- **Quiet hours & dedupe:** don't fire reminders/notifications at night; collapse multiple events for one customer into a single message where possible (cost + courtesy).
+
 ---
 
 ## 15. Estimates, Approvals, and Added Work
@@ -881,6 +915,15 @@ Design:
 - When set, the WO cannot move to "In progress" until the estimate's approval state is **Approved** — the mechanic sees a **"Waiting for estimate approval"** block, not the checklist.
 - It reuses the *same* `Estimate` + `Approval` objects and the *same* notification/timeout/escalation machinery (14.2) as added-issue approvals — only the trigger point differs (before work vs mid-work).
 - **Resume trigger (resolves G16):** on customer approval, the WO advances to "In progress" and the assigned mechanic is notified to begin.
+
+### 15.7 Service Price Catalog (new gap)
+
+Building every estimate from blank line items is slow and inconsistent. A reusable **price book** is both a completeness and an efficiency win:
+
+- A per-tenant **catalog of services and common parts** with default prices (e.g., "PMS labor — ₱400", "Brake pad set (front) — ₱1,400").
+- Estimates/bills are assembled by **picking catalog items** (still fully editable per job), not retyping.
+- Seeded at onboarding from the selected service types (33.3), grows over time, and feeds the parts autocomplete (11.3).
+- Makes "revenue by service type" (20.2) reliable because items are categorized, not free text.
 
 ---
 
@@ -1002,6 +1045,14 @@ PH shops commonly release to trusted customers with a balance ("utang") or accep
 - **Release with an outstanding balance is a controlled action:** it requires a **Manager/Owner authorization**, captures a **reason**, records the outstanding amount on the `Release`, and is **audit-logged** (Section 23.1). The balance remains tracked as receivable and surfaces in reports and the action center until settled.
 - Front-desk/cashier alone **cannot** release with a balance unless the shop policy and their role permit it (Section 21.3).
 
+### 16.9 Tax Display & Statutory Discounts (new gap)
+
+Billing statements must reflect PH financial reality (even though ShopTrace doesn't issue the official receipt — 16.7):
+
+- **VAT handling:** a per-shop setting for **VAT-registered (12% VAT)** vs **non-VAT (percentage tax)**. Billing statements show the correct VAT-inclusive/exclusive breakdown so the figures reconcile with the shop's official OR.
+- **Senior Citizen / PWD discounts:** if the shop chooses to honor these, model them as a discount type that records the **ID number** and applies the shop's policy. *(Note: the legally **mandated** 20% + VAT-exemption applies to specific establishment types — restaurants, medical, transport, etc. — and auto repair is generally **not** in the mandated list. So treat this as a configurable, recorded discount, not an assumed legal requirement. Confirm with the shop's accountant.)*
+- These are recorded for the bookkeeper's BIR filing via exports (20.4), not issued as official tax documents by ShopTrace.
+
 ---
 
 ## 17. PMS Reminders and Customer Retention
@@ -1094,6 +1145,15 @@ On sale:
 - Prior owner's personal data governed by retention rules (Section 22)
 - New owner sees only their own service period by default
 - Shop staff can view full history for service continuity
+
+### 18.7 Edge-Case Actor Flows (resolves G9, G14, G18/19, G23)
+
+§18.1–18.6 define the *states*; these are the *who-does-what* flows that were missing:
+
+- **Decline-continuation (G9):** when a customer declines *added* work, the **original approved work still proceeds** by default; only the declined line items are dropped. The decline is recorded (appears in declined-recommendations history, 20.3) and can become a future reminder/promo trigger.
+- **Escalation resolution (G14):** a timed-out approval (14.2) surfaces in the Action Center; the handler chooses **call & approve-on-behalf** (recorded as staff-entered with reason), **decline**, or **hold**. Every choice is audited.
+- **Cross-role approval routing (G18/G19):** a discount/refund/price-override above threshold creates an **approval request routed to a Manager/Owner** (Action Center), who approves/rejects with a reason — the request→decision handoff is explicit, not implicit (ties to 21.3).
+- **No-show / cancellation / abandoned / rework** each have an owner and a next action: no-show → staff clears + optional re-notify; cancellation → bay freed + deposit per policy; abandoned → contact log + storage-fee notes + final-notice record (never silent release); rework → linked to original WO + billable-or-warranty decision (18.1).
 
 ---
 
@@ -1291,6 +1351,15 @@ The product collects PII (names, phone numbers, plates, vehicles, visit patterns
 - Documented restore process with tested recovery time
 - Password reset and session management flows defined before launch
 
+### 23.3 Audit Log Immutability (new gap)
+
+The trust controls (21.3) and owner dashboards (36.3) are only meaningful if the audit log itself can't be quietly altered.
+
+- The audit log is **append-only** — **no edit or delete, not even by Owner.** Enforced at the database layer (RLS denies update/delete; insert-only), not just the app.
+- Entries are **timestamped server-side** (never trust client clocks) and reference the actor's identity.
+- Retention: audit entries kept at least as long as the dispute/financial window (align with 22, 24.4).
+- Optional later: periodic hash-chaining for stronger tamper-evidence.
+
 ---
 
 ## 24. Media, Storage & Cost
@@ -1334,6 +1403,15 @@ Issue/scan videos massively increase upload time and storage and undermine the w
 - Test explicitly in the photo spike (Section 28) — spike currently tests 8 photos; add one video test
 - If PWA video upload is unreliable, defer video to a later phase
 
+### 24.6 Image Derivatives / Thumbnails (new gap — optimization)
+
+A photo-heavy product must not serve full-resolution images to list views, or both cost and speed suffer.
+
+- **On upload, generate derivatives:** a small **thumbnail** (queue board, history lists) and a **medium** (portal/gallery viewing); keep the full-res as the archival original.
+- **Serve the smallest sufficient size**; full-res only on explicit "view original," via short-lived signed URL.
+- This is the single biggest lever on R2 egress and on perceived speed for the customer portal and admin history. Pairs with the capture-time compression in 24.2.
+- Generate derivatives server-side after upload (or via an image-resizing CDN) — not on the cheap tablet.
+
 ---
 
 ## 25. Localization
@@ -1344,6 +1422,7 @@ Many staff and customers are most comfortable in Filipino/Taglish.
 - Customer portal labels, status descriptions, and notification templates in both languages
 - Taglish templates for: tracking link notification, approval request, ready-for-release notice, PMS reminder, payment confirmed
 - Full multi-language admin UI is later, but customer-facing Taglish materially affects adoption (A1/A4)
+- **Per-customer language preference (new):** store EN vs Taglish on the customer record; the portal and all messages to that customer honor it. Default Taglish for PH.
 
 ---
 
@@ -1957,3 +2036,10 @@ Multi-branch build remains **post-MVP** (P3), but the `Organization`/`org_id` se
 - **New entities:** `Organization`, `Inquiry`, `Thread/Message`, `Release` (Section 11.1); new flags on `WorkOrder`/`Estimate`.
 - **Strengthened Section 16.7 (BIR):** reframed as record-keeping-not-receipt-issuing — ShopTrace never issues an OR/SI (stamps internal docs "NOT an Official Receipt"), stores the shop's manual OR reference, history is out of BIR scope; CAS/POS registration is a deliberate later opt-in. Not legal advice.
 - **Scoped Messenger integration (14.5):** copy-to-Messenger for MVP; Phase 2 limited to inbound-triggered + click-to-Messenger within Meta's 24h window; never for cold reminders (SMS for those).
+
+### v1.7 → v1.8 (remaining gaps closed + fresh UX/completeness/optimization critique)
+
+- **Closed remaining flow gaps:** notification reliability + tracking-link non-open follow-up (14.6, G7/G13); mechanic offline UX + job handoff (12.13, G15/G17); returning-customer recognition, multi-vehicle, plate-less/conduction-sticker, quick walk-in (10.7, G11/G22); edge-case actor flows incl. decline-continuation, escalation resolution, cross-role approval routing (18.7, G9/G14/G18/G19/G23).
+- **New gaps found and resolved (fresh critique):** service price catalog (15.7, G24); audit-log immutability (23.3, G25); image derivatives/thumbnails (24.6, G26); global search (10.8, G27); success-metric instrumentation (4.3, G28); VAT display + senior/PWD discount recording (16.9, G29); per-customer language preference (25, G31).
+- **New entities:** `ServiceCatalogItem`, `EventLog` (11.1).
+- **Registered but still open** (in `user-journeys.md` G32–G41): empty states, staff real-time alerts, undo/correction, testing+seed data, retention purge job, **backup provider+restore (G37, launch-blocker)**, booking-vs-availability, parts ETA, accessibility, time-zone discipline.

@@ -165,10 +165,41 @@ The spine journey. Three entry paths converge, then one lifecycle.
 | **G17** | **Mechanic offline UX** flow (indicator, reconnect moment) | Medium | §12.11 / §27.2 |
 | **G2** | **Staff invite → accept → first-login → PIN** flow | Medium | §27.6 / §33 |
 | **G21** | **Claim-link issuance** placed in a shop-side screen | Medium | §34.2 + screen inventory |
-| **G22** | **One customer, two vehicles** in the shop at once | Low | §10 / §11 |
-| **G23** | **Edge-state actor flows** (no-show / cancel / abandoned / rework) | Low–Med | §18 |
+| **G22** | **One customer, two vehicles** in the shop at once | Low | ✅ Resolved — §10.7 |
+| **G23** | **Edge-state actor flows** (no-show / cancel / abandoned / rework) | Low–Med | ✅ Resolved — §18.7 |
 | **G3** | **Go-live / parallel-run** transition guidance | Low | ✅ Resolved — §33.9 |
-| **G18/19** | **Cross-role approval routing** (refund/discount request→decision) | Low | §21 |
+| **G18/19** | **Cross-role approval routing** (refund/discount request→decision) | Low | ✅ Resolved — §18.7 |
+| **G7** | Tracking-link non-open follow-up | Medium | ✅ Resolved — §14.6 |
+| **G9** | Decline-continuation | Medium | ✅ Resolved — §18.7 |
+| **G11** | Returning-customer recognition UX | Medium | ✅ Resolved — §10.7 |
+| **G13** | Notification send-failure handling | Medium | ✅ Resolved — §14.6 |
+| **G17** | Mechanic offline UX flow | Medium | ✅ Resolved — §12.13 |
+| **G15** | Mechanic shift handoff / overnight job | Medium | ✅ Resolved — §12.13 |
+
+### Fresh critique — new gaps found (UX / completeness / optimization)
+
+A second pass beyond the original journey gaps. Resolved items folded into PRD v1.8.
+
+| ID | Gap | Type | Severity | Status |
+|----|-----|------|----------|--------|
+| **G24** | **Service price catalog / price book** — estimates built from scratch otherwise | Completeness/UX | High | ✅ §15.7 |
+| **G25** | **Audit log immutability** — append-only, no edit/delete even by Owner | Completeness/trust | High | ✅ §23.3 |
+| **G26** | **Image derivatives/thumbnails** — don't serve full-res to lists | Optimization | High | ✅ §24.6 |
+| **G27** | **Global search** (WO/customer/vehicle/plate) | UX | High | ✅ §10.8 |
+| **G28** | **Success-metric instrumentation** (events) — §4 unmeasurable without it | Completeness | High | ✅ §4.3 |
+| **G29** | **VAT display + senior/PWD discount recording** | Completeness (PH) | Med | ✅ §16.9 |
+| **G30** | **Plate-less / conduction-sticker vehicles**; quick/anonymous walk-in | Completeness (PH) | Med | ✅ §10.7 |
+| **G31** | **Per-customer language preference** (EN/Taglish) | UX | Med | ✅ §25 |
+| **G32** | **Empty states & first-run** across all surfaces | UX | Med | Open |
+| **G33** | **Staff in-app notifications/alerts** (real-time) beyond Action Center polling | UX | Med | Open |
+| **G34** | **Undo / correction flows** for staff mistakes (mis-assign, wrong status) | UX | Med | Open |
+| **G35** | **Testing/QA strategy + seed/demo data** | Process | Med | Open |
+| **G36** | **Data-retention purge job** to enforce §24.4 / §22 (policy exists, no mechanism) | Completeness | Med | Open |
+| **G37** | **Backup provider + tested restore** (still TBD in §30) | Process | High | Open |
+| **G38** | **Booking vs mechanic availability** (booking ignores who's working) | Completeness | Low | Open |
+| **G39** | **Parts ETA on "waiting for parts"** (no expected-date / light ordering) | Completeness | Low | Open |
+| **G40** | **Accessibility baseline** (contrast, font scaling) — customer portal esp. | UX | Low | Open |
+| **G41** | **Time-zone / server-clock** discipline for timestamps & metrics | Completeness | Low | Open |
 
 ### Artifact gaps (not flows, but build blockers — already known)
 
@@ -189,5 +220,11 @@ The spine journey. Three entry paths converge, then one lifecycle.
 4. **Write the partner API contract** (G20) as a shared doc.
 5. **Per-feature acceptance criteria** alongside the screen inventory.
 6. Edge-state actor flows (G23) and ops/go-live guidance (G3) can follow.
+
+### Remaining before "start it right" (open items)
+
+- **Build blockers (do these next):** screen inventory · Supabase schema + RLS · per-feature acceptance criteria · **backup provider + tested restore (G37)** · testing/seed-data strategy (G35).
+- **Fold into the schema/build:** empty states (G32), staff alerts (G33), undo/correction (G34), retention purge job (G36), time-zone discipline (G41) — cheap if designed in now, costly to retrofit.
+- **Defer safely:** booking-vs-availability (G38), parts ETA (G39), accessibility polish (G40) — real but not launch-blocking.
 
 > **Key point:** several High gaps (messaging, inquiry→WO, up-front approval, partial payment) **add entities to the data model.** That's why they must be closed *before* the schema is written — otherwise the schema is rework.

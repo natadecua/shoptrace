@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-06-02  
 **Phase:** Planning → about to enter build (P0 spike)  
-**Authoritative docs:** `docs/prd.md` (v1.7) · `docs/website-prd.md` · `docs/design-prompts.md` · `docs/consumer-app-prd.md` (parked) · `docs/user-journeys.md` · `docs/integration-api.md`  
+**Authoritative docs:** `docs/prd.md` (v1.8) · `docs/website-prd.md` · `docs/design-prompts.md` · `docs/consumer-app-prd.md` (parked) · `docs/user-journeys.md` · `docs/integration-api.md`  
 **Naming:** *ShopTrace* = the product/platform · *AutoLounge* = the pilot/example shop (tenant #1)
 
 ---
@@ -49,10 +49,13 @@ Planning is essentially complete at the product and architecture level. The PRD 
 | Multi-tenancy model decided | ✅ Done | RLS-first |
 | Auth approach resolved | ✅ Done | Supabase Auth + JWT claims |
 | ORM/tooling decided | ✅ Done | Supabase CLI, no Prisma |
-| **Database schema (SQL + RLS)** | ⬜ Not started | Section 11 entities → tables + policies. **Next action.** |
+| Flow gaps (high + medium) | ✅ Done | All resolved in PRD v1.7–v1.8; see `user-journeys.md` |
+| **Database schema (SQL + RLS)** | ⬜ Not started | Section 11 entities → tables + policies. **Next action** (now safe — data-model-affecting gaps closed). |
 | **Screen inventory** | ⬜ Not started | Numbered screens per surface + flow map |
 | API / server-action contract | ⬜ Not started | Needed for the app layer, after schema |
 | Per-feature acceptance criteria | ⬜ Partial | Only MVP-level metrics (§4) exist so far |
+| **Backup provider + tested restore** | ⬜ Not started | Launch blocker (G37); decide provider + restore cadence |
+| Testing/QA + seed data | ⬜ Not started | G35 |
 
 ---
 
@@ -94,3 +97,4 @@ Planning is essentially complete at the product and architecture level. The PRD 
 - **v1.5** — renamed product to ShopTrace; booking + customer media (§9.6–9.7); consumer-app seam parked (§34)
 - **v1.6** — consumer app spun out to its own PRD + backend (`consumer-app-prd.md`, *Garage by ShopTrace*)
 - **v1.7** — resolved high flow gaps (messaging, intake funnel, pre-work approval, partial/credit release, action center, import); added multi-shop dashboards (§36) and pricing/works trust controls (§21.3); strengthened BIR posture and scoped Messenger
+- **v1.8** — closed remaining flow gaps (notification reliability, offline UX/handoff, returning-customer, edge-case flows); fresh critique added price catalog, audit immutability, thumbnails, global search, metrics instrumentation, VAT/senior-PWD, language preference; registered open items (G32–G41) incl. backup/restore launch blocker
