@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-06-02  
 **Phase:** Planning → about to enter build (P0 spike)  
-**Authoritative docs:** `docs/prd.md` (v1.6) · `docs/website-prd.md` · `docs/design-prompts.md` · `docs/consumer-app-prd.md` (parked) · `docs/user-journeys.md` · `docs/integration-api.md`  
+**Authoritative docs:** `docs/prd.md` (v1.7) · `docs/website-prd.md` · `docs/design-prompts.md` · `docs/consumer-app-prd.md` (parked) · `docs/user-journeys.md` · `docs/integration-api.md`  
 **Naming:** *ShopTrace* = the product/platform · *AutoLounge* = the pilot/example shop (tenant #1)
 
 ---
@@ -31,6 +31,11 @@ Planning is essentially complete at the product and architecture level. The PRD 
 | Product naming | **ShopTrace** = platform; AutoLounge = pilot/example shop | PRD header, §1 |
 | Booking + customer media | Added as **P2** (booking ≠ walk-in queue; customer media kept separate from shop proof) | PRD §9.6, §9.7 |
 | Consumer maintenance tracker | **Separate product + separate backend, parked.** *Garage by ShopTrace* (Expo/RN); integrated via ShopTrace partner API; build after pilot | PRD §34, `consumer-app-prd.md` |
+| High flow gaps | **Resolved** — messaging (14.4), intake funnel (10.6), pre-work approval (15.6), partial/credit release (16.8), action center (§35), data import (33.9) | PRD, closes G1/G4/G5/G6/G8/G10/G12/G16 |
+| Multi-shop / owner dashboards | **Added** — `Organization` layer (`org_id` seam day one); read-only cross-branch dashboards; build post-MVP | PRD §36 |
+| Pricing/works trust controls | **Added** — role restriction, maker–checker, WO locking, before→after audit | PRD §21.3, §23.1 |
+| BIR posture | Record-keeping only; never issues OR/SI; stores manual OR ref; CAS/POS registration is later opt-in | PRD §16.7 |
+| Messenger | Copy-to-Messenger MVP; scoped inbound-triggered Phase 2 (24h window); SMS for cold reminders | PRD §14.5 |
 | Mechanic capture | **Native camera** (`<input capture>`), device-agnostic (tablet *or* phone) | PRD §12.12 |
 | Network reliability | **Pure cloud, zero setup is the default**; APs and local photo relay are optional add-ons; full edge deferred | PRD §27.4 |
 | Onboarding/KISS | Minimal sign-up + skippable wizard + seeded defaults + per-tenant theming + feature toggles | PRD §33 |
@@ -88,3 +93,4 @@ Planning is essentially complete at the product and architecture level. The PRD 
 - **v1.4** — finalized hosting (Vercel); custom-domain add-on (§33.8)
 - **v1.5** — renamed product to ShopTrace; booking + customer media (§9.6–9.7); consumer-app seam parked (§34)
 - **v1.6** — consumer app spun out to its own PRD + backend (`consumer-app-prd.md`, *Garage by ShopTrace*)
+- **v1.7** — resolved high flow gaps (messaging, intake funnel, pre-work approval, partial/credit release, action center, import); added multi-shop dashboards (§36) and pricing/works trust controls (§21.3); strengthened BIR posture and scoped Messenger

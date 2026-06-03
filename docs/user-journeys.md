@@ -145,29 +145,29 @@ The spine journey. Three entry paths converge, then one lifecycle.
 
 ## 9. Consolidated Gap Register
 
-| ID | Gap | Severity | Where to fix |
+| ID | Gap | Severity | Status / Where fixed |
 |----|-----|----------|--------------|
-| **G4** | **Two-way customer ↔ shop messaging** (inbox, who-answers, staff notification) — assumed by "Ask a question" and "message shop" | **High** | New PRD section + screen |
-| **G5** | **Inquiry → work order conversion** / triage of pending inquiries | **High** | §8.3 + §10 |
-| **G8** | **Up-front estimate-approval-before-work** journey (repair path), distinct from added-issue approval | **High** | §15 (new subflow) |
-| **G12** | **Admin/owner action center** — unified "what needs me now" | **High** | New PRD section |
-| **G1** | **Data import / migration** at onboarding (existing customers/vehicles/history) | **High** | §33 |
-| **G10** | **Partial payment / credit ("utang") release** (PH reality) | **High** | §16 |
-| **G20** | **Partner API contract** (ShopTrace ↔ Garage) — single source of truth | High | New `integration-api.md` |
-| **G6** | Booking **day-of check-in** (booking → active queue) | Medium | §9.6 |
+| **G4** | **Two-way customer ↔ shop messaging** (inbox, who-answers, staff notification) — assumed by "Ask a question" and "message shop" | **High** | ✅ Resolved — §14.4 |
+| **G5** | **Inquiry → work order conversion** / triage of pending inquiries | **High** | ✅ Resolved — §10.6 |
+| **G8** | **Up-front estimate-approval-before-work** journey (repair path), distinct from added-issue approval | **High** | ✅ Resolved — §15.6 |
+| **G12** | **Admin/owner action center** — unified "what needs me now" | **High** | ✅ Resolved — §35 |
+| **G1** | **Data import / migration** at onboarding (existing customers/vehicles/history) | **High** | ✅ Resolved — §33.9 |
+| **G10** | **Partial payment / credit ("utang") release** (PH reality) | **High** | ✅ Resolved — §16.8 |
+| **G20** | **Partner API contract** (ShopTrace ↔ Garage) — single source of truth | High | ✅ Resolved — `integration-api.md` |
+| **G6** | Booking **day-of check-in** (booking → active queue) | Medium | ✅ Resolved — §10.6 |
 | **G7** | Tracking-link **non-open follow-up** | Medium | §14 |
 | **G9** | **Decline-continuation** (declined added work → does original proceed?) | Medium | §18.4 |
 | **G11** | **Returning-customer recognition UX** at intake | Medium | §10.2 / §11.2 |
 | **G13** | **Notification send-failure** handling (SMS bounce → fallback) | Medium | §14 |
-| **G14** | **Escalation resolution** flow (act on a timed-out approval) | Medium | §14.2 |
-| **G15** | **Mechanic shift handoff / overnight job** ownership transfer | Medium | §12.10 |
-| **G16** | **Approval → resume** trigger (mechanic told to continue) | Medium | §12 / §15 |
+| **G14** | **Escalation resolution** flow (act on a timed-out approval) | Medium | Partly — surfaced in §35 Action Center |
+| **G15** | **Mechanic shift handoff / overnight job** ownership transfer | Medium | Open — §12.10 |
+| **G16** | **Approval → resume** trigger (mechanic told to continue) | Medium | ✅ Resolved — §15.6 |
 | **G17** | **Mechanic offline UX** flow (indicator, reconnect moment) | Medium | §12.11 / §27.2 |
 | **G2** | **Staff invite → accept → first-login → PIN** flow | Medium | §27.6 / §33 |
 | **G21** | **Claim-link issuance** placed in a shop-side screen | Medium | §34.2 + screen inventory |
 | **G22** | **One customer, two vehicles** in the shop at once | Low | §10 / §11 |
 | **G23** | **Edge-state actor flows** (no-show / cancel / abandoned / rework) | Low–Med | §18 |
-| **G3** | **Go-live / parallel-run** transition guidance | Low | §33 / ops doc |
+| **G3** | **Go-live / parallel-run** transition guidance | Low | ✅ Resolved — §33.9 |
 | **G18/19** | **Cross-role approval routing** (refund/discount request→decision) | Low | §21 |
 
 ### Artifact gaps (not flows, but build blockers — already known)

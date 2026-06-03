@@ -1,6 +1,6 @@
 # ShopTrace — Product Requirements Document
 
-**Version:** 1.6  
+**Version:** 1.7  
 **Date:** 2026-06-02  
 **Status:** Authoritative — Section 0 decisions confirmed  
 **Source:** Merged from v1 draft + v2 revision  
@@ -419,6 +419,16 @@ Vehicle history shows:
 - Next PMS due date or mileage
 - Linked rework/warranty visits (Section 18.1)
 
+### 10.6 Intake Funnel — Inquiry & Booking Triage (resolves G5)
+
+Three intake paths converge into one funnel so nothing is lost between "customer reached out" and "work order exists."
+
+- **Sources:** walk-in (staff create directly), website/Messenger **inquiry** (§8.3), and **booking** (§9.6). Inquiries and bookings create an `Inquiry` record, not a work order.
+- **Pending Intake lane:** inquiries and unconfirmed bookings appear in a **"Pending Intake"** column on the queue board (§9.4). One place to triage.
+- **Triage actions:** **Accept** → converts the inquiry into a work order, pre-filling customer, vehicle, service type, concern, and any customer-supplied media (§9.7); **Decline / spam** → closes it with a reason; **Ask a question** → opens a message thread (§14.4) without yet committing to a WO.
+- **Conversion is tracked:** the `Inquiry` links to the `WorkOrder` it became (status `converted`), so source-to-job reporting is possible (which channel produces real jobs).
+- **Booking day-of check-in (resolves G6):** on the scheduled day, a confirmed booking is promoted from Pending Intake into the active queue with one tap.
+
 ---
 
 ## 11. Data Model
@@ -427,11 +437,13 @@ Vehicle history shows:
 
 | Entity | Notes |
 |--------|-------|
-| **Tenant/Shop** | Present from day one (D1). `tenant_id` on every table. |
+| **Organization** | Groups one or more `Shop` tenants under one owner/operator. Present from day one (nullable / single-shop org by default) so multi-branch is a config change, not a rewrite — mirrors the `tenant_id` decision (D1). Drives cross-branch dashboards (Section 36). |
+| **Tenant/Shop (branch)** | Belongs to one Organization. `tenant_id` on every table; `org_id` for cross-branch grouping. |
 | **Customer** | Name, contacts, consent flags. |
 | **Vehicle** | Make/model/year, plate, VIN if available. |
 | **VehicleOwnership** | Links Customer ↔ Vehicle with `from`/`to` dates. History survives a sale (D5). |
-| **WorkOrder** | Belongs to one Vehicle (and via ownership at time of service, one Customer). |
+| **Inquiry** | A pre-work-order intake from website/Messenger/booking. Status: new / accepted / declined / converted. Links to the `WorkOrder` it becomes (Section 10.6). |
+| **WorkOrder** | Belongs to one Vehicle (and via ownership at time of service, one Customer). Has a `locked` flag (Section 21.3) and a `requires_estimate_approval` flag (Section 15.6). |
 | **ChecklistTemplate** | Per service type, editable by admin. Template CRUD is a required feature. |
 | **PhotoTemplate** | Required/optional photo steps per service type, ordered. |
 | **ChecklistItem** | Step within a template: required/optional flag, photo requirement, order. |
@@ -439,14 +451,16 @@ Vehicle history shows:
 | **JobChecklistItem** | Mechanic's completion state: pending/done/N-A/needs attention/blocked. Includes skip reason if required item is skipped. |
 | **Photo** | Linked to a job and optionally a checklist item. Visibility flag: internal-only vs customer-visible. |
 | **Issue** | Discovered during inspection. Linked to work order. Goes through admin review before customer sees it. |
-| **Estimate / LineItem** | Labor, parts, supplies, discounts. |
+| **Estimate / LineItem** | Labor, parts, supplies, discounts. Estimate has an approval state (Section 15.6). |
 | **Approval** | Linked to issue or estimate. Records customer response, timestamp, IP, typed name. |
-| **Payment** | Amount, method, reference number, proof photo, verified by, timestamp. |
+| **Thread / Message** | A two-way message thread scoped to a `WorkOrder` (Section 14.4). Each message has a direction (customer ↔ shop), author, timestamp, channel. |
+| **Payment** | Amount, method, reference number, proof photo, verified by, timestamp. Multiple payments roll up against a work order balance (Section 16.8). |
+| **Release** | Records vehicle release: by whom, when, payment status at release, and — if released with an outstanding balance — the authorizing manager and reason (Section 16.8). |
 | **Deposit** | A payment applied before final billing; reduces the balance on the final bill. |
-| **Discount / Promo** | Discount rule, campaign reference. |
+| **Discount / Promo** | Discount rule, campaign reference. Above-threshold discounts carry an approver (Section 21.3). |
 | **Reminder** | PMS reminder linked to customer and vehicle. |
 | **Domain** | Per-tenant hostname(s): the default `{shop}.shoptrace.app` plus any verified custom domain (Section 33.8). Fields: `hostname`, `surface` (portal/public), `verified`, `cert_status`. Drives host-aware tenant resolution. |
-| **AuditLog** | All significant state changes (Section 23.1). |
+| **AuditLog** | All significant state changes, including price/work-scope changes with before→after (Section 23.1). |
 
 ### 11.2 Identity Resolution (Dedup Problem)
 
@@ -786,9 +800,30 @@ This directly addresses the real cost of a car occupying a bay while the custome
 
 - Automated SMS send (no staff action needed)
 - Email reminders
-- Messenger API integration if feasible
+- Messenger integration (scoped — see 14.5)
 - Delivery/read status tracking
 - Opt-out management
+
+### 14.4 Customer Messaging — Two-Way Threads (resolves G4)
+
+Several features ("Ask a question" on an approval, "message the shop" after payment, inquiry replies) assume a messaging channel. This defines it — deliberately **as a lightweight per-work-order thread, not a standalone chat product.**
+
+- **Scope:** a `Thread` is attached to a `WorkOrder` (or to an `Inquiry` before a WO exists). Messages are `customer ↔ shop`, async, with author/timestamp/channel.
+- **Customer side:** sends from the tracking portal ("Ask a question" / "message the shop"). No login — the secure token + PIN already gates the portal (13.2).
+- **Staff side:** inbound messages appear on the work order **and** in the Action Center (Section 35) with an unread indicator; staff reply with templates (EN/Taglish). Inbound customer message → staff notification.
+- **No real-time chat infra** in v1 — polling/refresh is fine; this is async support, not live chat.
+- **Audit & privacy:** messages are part of the WO record; covered by intake consent (Section 22).
+
+### 14.5 Messenger Integration — Scoped (Phase 2)
+
+Full Messenger API integration is **possible but constrained**, so it is scoped, not open-ended. The hard limit is Meta's **24-hour messaging window**: outside 24 hours of the customer's last message to the Page, only a few approved message tags are allowed — cold re-engagement (e.g., PMS reminders months later) is **not** permitted.
+
+- **MVP stays copy-to-Messenger** (clipboard) — zero integration, zero policy risk; staff already work from their Page inbox.
+- **Phase 2 = inbound-triggered + click-to-Messenger only:**
+  - **Click-to-Messenger** on the website (m.me / plugin) starts an inquiry → lands as **Pending Intake** (Section 10.6).
+  - When a customer messages the Page, the 24h window opens → ShopTrace can send the tracking link and replies **within that window** via the API.
+- **Never use Messenger for cold PMS reminders → use SMS** (Section 17).
+- **Per-tenant setup cost:** each shop connects its own Facebook Page (OAuth, page tokens, Meta app review). Flag this as real, ongoing maintenance before committing.
 
 ---
 
@@ -833,6 +868,19 @@ Both options record the specific approved and declined items, not just a blanket
 ### 15.5 Customer-Facing vs Internal Descriptions
 
 Customer-facing issue descriptions must be simple and non-alarming. Internal mechanic notes are never shown to customers automatically. Admin reviews and rewrites before sending.
+
+### 15.6 Pre-Work Estimate Approval (resolves G8)
+
+Two job archetypes need two flows, handled by one mechanism:
+
+- **Quick service (e.g., PMS / change oil):** work proceeds immediately on intake. No up-front approval gate.
+- **Estimate-first (repair):** inspect → quote → **customer approves before work begins** → then work. This is the missing journey distinct from the added-issue approval in 15.2.
+
+Design:
+- Each work order carries a **`requires_estimate_approval`** flag (set by service type default, overridable at intake).
+- When set, the WO cannot move to "In progress" until the estimate's approval state is **Approved** — the mechanic sees a **"Waiting for estimate approval"** block, not the checklist.
+- It reuses the *same* `Estimate` + `Approval` objects and the *same* notification/timeout/escalation machinery (14.2) as added-issue approvals — only the trigger point differs (before work vs mid-work).
+- **Resume trigger (resolves G16):** on customer approval, the WO advances to "In progress" and the assigned mechanic is notified to begin.
 
 ---
 
@@ -931,9 +979,28 @@ Common in PH repair (parts ordered against a downpayment):
 
 ### 16.7 Official Receipts / BIR
 
-The product **does not claim BIR compliance.** It stores a manual OR / sales-invoice / receipt reference number and supports BIR-ready reports for the shop's existing accounting process.
+**The product is an operations and record-keeping tool, not an accounting/POS system, and it does not issue official receipts.** This is the deliberate line that keeps ShopTrace out of BIR registration scope.
 
-> **Known limitation:** The shop still issues official receipts outside the system, creating a double-entry step. This is an accepted v1 constraint. Flag during onboarding so it is not a surprise.
+The key distinction: in the Philippines, BIR scope is triggered by **issuing official receipts / sales invoices** (and registering a Computerized Accounting System / POS that generates them) — **not** by keeping operational records. So:
+
+- **ShopTrace never issues an OR/SI.** Its printable financial documents — estimates, **billing statements**, service reports — are *internal* and are clearly stamped **"NOT an Official Receipt — for service-record purposes only."**
+- **The shop issues its own BIR-registered OR/SI** through their existing process; ShopTrace **stores the reference** (OR/SI number + date) so history links to the official document without generating it.
+- **Service history and proof records are not a BIR concern** — record-keeping is fine; only document *issuance* is regulated. The history database (and the Garage consumer app) are clear of this entirely.
+- **BIR-ready exports** (sales summaries by date/method/service) *support* the shop's bookkeeper in filing — they do not replace official books.
+- **Future opt-in path:** a shop that later wants integrated OR issuance would register ShopTrace as a CAS/POS with BIR — a deliberate premium path, out of MVP scope.
+
+> **Known limitation:** the shop still issues official receipts outside the system (a double-entry step). Accepted v1 constraint; flag at onboarding.
+>
+> **Not legal/tax advice.** Each shop should confirm its specific obligations with its accountant / the BIR.
+
+### 16.8 Partial Payment & Credit Release (resolves G10)
+
+PH shops commonly release to trusted customers with a balance ("utang") or accept partial payment. Modeled explicitly:
+
+- **Payments roll up against a work-order balance.** Multiple `Payment` records (deposit, partial, final) net against the total; the balance is always visible.
+- **Per-shop release policy:** *require-full-payment-before-release* **or** *allow-release-with-balance*. Default is require-full-payment.
+- **Release with an outstanding balance is a controlled action:** it requires a **Manager/Owner authorization**, captures a **reason**, records the outstanding amount on the `Release`, and is **audit-logged** (Section 23.1). The balance remains tracked as receivable and surfaces in reports and the action center until settled.
+- Front-desk/cashier alone **cannot** release with a balance unless the shop policy and their role permit it (Section 21.3).
 
 ---
 
@@ -1148,6 +1215,28 @@ On sale:
 - Own tracking portal only
 - Cannot access any admin, mechanic, or other customer data
 
+**Org Owner / Org Manager (multi-branch):**
+- Cross-branch read-only dashboards across the organization's shops (Section 36)
+- No edit access to a branch's operations unless they also hold a shop-level role there
+
+### 21.3 Pricing & Work-Order Change Controls (only trusted people)
+
+Owner confidence in the numbers depends on price and work-scope changes being made only by trusted people, and every change being traceable. Four layers:
+
+**1. Role restriction.**
+- **Set/edit pricing, line items, and discounts:** Manager / Owner only.
+- **Admin / Front Desk** may *prepare* estimates and bills, but a **price override beyond a configurable threshold (or below cost)** requires Manager approval.
+- **Mechanics** never set pricing (pricing fields off by default — 12.8).
+- **Cashier** records and verifies payments but cannot change prices or line items.
+
+**2. Maker–checker (segregation of duties).** Discounts and price overrides above a configurable amount require a **second trusted approver** (Manager/Owner). Where practical, the person who created a large discount is not the one who verifies the related payment (extends 16.2).
+
+**3. Locking.** When a work order is **released or fully paid, it locks.** Reopening or editing a locked WO (price, line items, or work scope) requires **Manager/Owner + a reason**, and creates an audit entry. Released-with-balance authorizations (16.8) are likewise restricted and logged.
+
+**4. Tamper-evident audit.** Every price, line-item, discount, and work-scope change is logged with **before → after, who, and when** (Section 23.1). This is the deterrent against insider manipulation and the reason the cross-branch dashboards (Section 36) can be trusted.
+
+> These controls are what make the owner dashboards believable: confidence comes from controlled, auditable inputs — not from the charts.
+
 ---
 
 ## 22. Data Privacy & Compliance
@@ -1178,9 +1267,15 @@ The product collects PII (names, phone numbers, plates, vehicles, visit patterns
 | Payment verified | Staff member, reference number, timestamp |
 | Discount applied | User, discount type, amount, reason |
 | Refund issued | User, approver, amount, reason |
+| **Price / line-item change** | User, work order, field, **before → after**, timestamp |
+| **Discount / override above threshold** | Maker, approver, amount, reason, timestamp |
+| **Work-scope change** (service/line added or removed) | User, work order, before → after, timestamp |
+| **Locked work order reopened** | Manager/Owner, work order, reason, timestamp |
+| **Released with outstanding balance** | Authorizing manager, amount, reason, timestamp |
 | Photo visibility changed | User, photo ID, old/new visibility |
 | Required-photo skip | Mechanic, skip reason, checklist step |
 | Template created / edited | User, timestamp |
+| Partner API access / claim verified | Partner, grant, vehicle, timestamp |
 | User login | User, timestamp, IP |
 | Export generated | User, report type, timestamp |
 
@@ -1513,8 +1608,15 @@ Prove the system can make a real shop job transparent from intake to release —
 ### P1 — MVP core
 
 - Queue board
+- Intake funnel — inquiry/booking triage → WO (Section 10.6)
 - Estimate/final bill + deposit support
+- Pre-work estimate approval for repairs (Section 15.6)
 - Payment proof + verification control
+- Partial payment & credit release controls (Section 16.8)
+- Pricing & work-order change controls + audit (Section 21.3)
+- Action Center (Section 35)
+- Two-way customer messaging (Section 14.4)
+- Data import at onboarding (Section 33.9)
 - PMS reminder queue
 - Printable job order
 - Service history
@@ -1538,11 +1640,11 @@ Prove the system can make a real shop job transparent from intake to release —
 ### P3 — Future
 
 - Automated SMS (no staff action)
-- Messenger API integration
+- Messenger integration — scoped, inbound-triggered (Section 14.5)
 - Native mechanic app (if PWA fails the spike)
 - Full inventory management
 - SaaS subscription billing
-- Multi-branch support
+- Multi-branch management & owner dashboards (Section 36; `org_id` seam ships day one, build later)
 - Local edge server
 - Accounting integrations
 - Video proof at scale
@@ -1669,6 +1771,15 @@ White-labeling is only complete when the customer-facing URL is the shop's own. 
 
 **Why it's an add-on, not core:** it carries real per-domain cost and support surface, and most shops are happy on the free subdomain. It's a natural upsell for established shops that want their brand front-and-center — and it's a feature toggle + `Domain` row like everything else, so enabling it is config, not engineering.
 
+### 33.9 Data Import at Onboarding (resolves G1)
+
+A real shop has an existing customer/vehicle list; starting from zero blocks go-live. Keep it KISS:
+
+- **CSV import for customers and vehicles** in the wizard (or later from Settings): upload → map columns → preview → import. Dedupe on import via the identity-resolution rules (11.2).
+- **Quick-add historical service** — a fast form to backfill the few key past services per vehicle (date, mileage, service, cost) so history and PMS-due reminders work from day one.
+- **No ETL pipeline.** CSV in, mapped, deduped. (Logbook-photo import via the LLM is a *later* idea — parked.)
+- **Parallel-run guidance (resolves G3):** onboarding recommends running ShopTrace alongside paper for the first 1–2 weeks before retiring the paper flow.
+
 ---
 
 ## 34. Consumer Maintenance Tracker — Future Product (Parked)
@@ -1706,6 +1817,56 @@ It's a **growth flywheel and moat:** more shops on ShopTrace → richer cross-sh
 
 - **Phase A (cheap, within ShopTrace, optional later):** upgrade the per-job tracking token into a *persistent customer account scoped to one shop* — a customer sees all their visits to that shop. No cross-tenant complexity; validates demand for persistence.
 - **Phase B (the parked product):** the cross-shop, owner-centric *"by ShopTrace"* app on the consumer-identity layer + API above. Built only after pilot evidence and Phase A signal.
+
+---
+
+## 35. Action Center (resolves G12)
+
+A single per-role **"what needs me right now"** surface, so work doesn't fall through the cracks. It is an **aggregation over existing data** — no new entities — which is why it's cheap and high-value.
+
+Surfaces, filtered by role:
+
+- **Pending intake** — inquiries/bookings awaiting triage (10.6)
+- **Approvals waiting** — estimates/issues sent, not yet answered (incl. timed-out escalations, 14.2)
+- **Payments to verify** — proof uploaded, awaiting verification (16.2)
+- **Customer messages** — unread inbound threads (14.4)
+- **Reminders due** — PMS/registration/etc. ready to send (17)
+- **Outstanding balances** — released-with-balance receivables to follow up (16.8)
+- **Blocked jobs** — waiting for parts / waiting for approval / awaiting customer
+
+Each item is actionable (deep-links to the work order/thread) and clears when handled. This is the screen owners and advisors open first each day; it is also what makes the escalation/timeout machinery (14.2) actually get acted on.
+
+---
+
+## 36. Multi-Shop Management & Owner Dashboards
+
+For owners/operators running more than one branch — and to give any owner **confidence in the numbers**.
+
+### 36.1 Organization Layer
+
+- **`Organization` groups one or more `Shop` (branch) tenants** under one owner/operator.
+- **`tenant_id` (shop) stays the isolation key; `org_id` is the grouping** for cross-branch reads. Seeded from day one (single-shop org by default), so multi-branch is a config change, not a rewrite — mirrors D1.
+- **Org roles** (Org Owner / Org Manager) get **read-only** consolidated dashboards across branches; they do not edit a branch's operations unless they also hold a shop-level role there. RLS grants cross-branch *read* on `org_id`, never cross-branch write.
+
+### 36.2 Consolidated Dashboards
+
+- Revenue, jobs, average completion time, **rework rate**, payments, discounts — **by branch**, with **branch-vs-branch benchmarking**.
+- Mechanic/staff performance across branches (only where the underlying time-capture exists — 20.4 caveat).
+- Drill-down from any aggregate to the underlying work orders.
+
+### 36.3 Why the Numbers Can Be Trusted
+
+Confidence in cross-branch stats does **not** come from the charts. It comes from controlled, tamper-evident inputs:
+
+1. **Disciplined status timestamps** (10.3, 20 caveats) — so completion/cycle-time figures are real.
+2. **Structured-lite line items** (11.3) — so "revenue by service type" isn't free-text guesswork.
+3. **Pricing & work-scope change controls + audit trail** (21.3, 23.1) — so prices and work can't be quietly manipulated, and every change is traceable.
+
+The dashboards (Section 36) and the trust controls (Section 21.3) are deliberately one story: an owner trusts the branch comparison because no one untrusted could have altered the inputs without a trace.
+
+### 36.4 Phase
+
+Multi-branch build remains **post-MVP** (P3), but the `Organization`/`org_id` seam ships from day one so it's never a rewrite.
 
 ---
 
@@ -1787,3 +1948,12 @@ It's a **growth flywheel and moat:** more shops on ShopTrace → richer cross-sh
 
 - **Decided the consumer app is a separate product *and* separate backend**, integrated to ShopTrace via a partner API (not co-located in the shop Supabase). Reworked Section 34 accordingly (34.1 rationale, 34.2 partner API + two ShopTrace-side build gates).
 - **Added `docs/consumer-app-prd.md`** — full spec for *Garage by ShopTrace*: positioning, retention thesis, the KISS five-pillar spine, PH daily-utility hooks (number coding, fuel prices), document vault with expiry reminders, the enthusiast build-sheet, resale-ready verified history, the LLM quick-capture design, RFID toll-balance automation (the realistic notification-listener + predictive-reminder ladder, given there is no public API), Expo/React Native client choice, consumer-owned data model, MVP/phasing, and DPA privacy handling.
+
+### v1.6 → v1.7 (gap resolutions + multi-shop dashboards + trust controls)
+
+- **Resolved high-priority flow gaps from `user-journeys.md`:** customer two-way messaging as per-WO threads (14.4, G4); intake funnel for inquiry/booking → work order (10.6, G5/G6); pre-work estimate approval for the repair path (15.6, G8/G16); partial-payment & credit ("utang") release with manager authorization (16.8, G10); data import + parallel-run at onboarding (33.9, G1/G3); **Action Center** (Section 35, G12).
+- **Added Section 36 — Multi-Shop Management & Owner Dashboards:** `Organization` layer above the shop tenant (`org_id` seeded from day one), read-only cross-branch consolidated dashboards with benchmarking, and an explicit "why the numbers can be trusted" linkage to the trust controls and data-foundation discipline.
+- **Added Section 21.3 — Pricing & Work-Order Change Controls:** role restriction, maker–checker for above-threshold discounts/overrides, work-order locking after release/payment, and a tamper-evident before→after audit trail. New audit events in 23.1.
+- **New entities:** `Organization`, `Inquiry`, `Thread/Message`, `Release` (Section 11.1); new flags on `WorkOrder`/`Estimate`.
+- **Strengthened Section 16.7 (BIR):** reframed as record-keeping-not-receipt-issuing — ShopTrace never issues an OR/SI (stamps internal docs "NOT an Official Receipt"), stores the shop's manual OR reference, history is out of BIR scope; CAS/POS registration is a deliberate later opt-in. Not legal advice.
+- **Scoped Messenger integration (14.5):** copy-to-Messenger for MVP; Phase 2 limited to inbound-triggered + click-to-Messenger within Meta's 24h window; never for cold reminders (SMS for those).
