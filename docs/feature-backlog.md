@@ -105,7 +105,7 @@ The "live shop" view: a queue lane with an approach ramp + **gate/barrier**, wai
 - Does the mechanic app show the bay map too, or is it strictly the advisor's view?
 - How do multi-lift bays work? (Two cars on the same lift is physically impossible; one lift = one bay slot.)
 - **Onboarding weight:** keep bay setup **skippable** (MVP = bay count; planner = later), matching the source's Skip/Add-later — don't let a layout editor gate "first work order."
-- **Art-direction reconciliation:** the source's soft "premium-SaaS / Sims" look vs the distinctive automotive/forensic language in `visual-identity-brief.md` — is the soft look for the **planner surface only** (reasonable — it's a spatial tool), or the **whole product**? Open decision (see chat).
+- **Art-direction reconciliation (decided 2026-06-04):** *keep both directions open* — run Prompt A's automotive/forensic explorations AND the soft premium-SaaS/Sims planner track, compare from real outputs before committing. Guardrail: both must share the same **design-token structure** so the winner (or a "soft-planner / distinctive-elsewhere" split) is a cheap retheme, not a rebuild (see `visual-identity-brief.md`).
 
 ---
 

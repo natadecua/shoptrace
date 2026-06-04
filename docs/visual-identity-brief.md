@@ -8,6 +8,11 @@ Hand a design agent **Prompt A first**; once a direction is chosen, run **Prompt
 
 > **Critical framing for both:** ShopTrace is **multi-tenant** — *each shop brings its own logo + accent color*, applied via theme tokens. So the design language must be **brand-agnostic chrome that flexes per tenant**, not one fixed brand. ShopTrace's *own* identity lives on the marketing site and the app chrome; tenant surfaces adopt the tenant's brand. Design the *system*, not a single skin.
 
+> **Direction status (decided 2026-06-04): TWO directions stay open, compare from real outputs.**
+> 1. **Distinctive automotive/forensic** — Prompt A below (anti-generic).
+> 2. **Soft premium-SaaS / Sims** — the in-progress bay-planner asset track (light, white, soft-rounded, lightly gamified).
+> Run both, render the **same signature screen** in each, then choose from pixels — don't pre-merge. **Harmonization guardrail:** both directions must emit the **same design-token shape** (Prompt B's token contract — color roles, type scale, radius, status set, per-tenant accent slot). If they share the token *structure*, picking a winner (or splitting "soft for the planner, distinctive elsewhere") is a cheap retheme, not a rebuild. Diverge on *values*, never on *token structure*.
+
 ---
 
 ## Prompt A — Design Language & Visual Identity Exploration
