@@ -273,47 +273,79 @@ Consented positive `Survey` responses (C2) display on the public page / gallery 
 
 ---
 
-## Theme I — Progressive Feature Eligibility & Gamification 🔎  ⭐ (simple by default, unlock as you grow)
+## Theme I — Progressive Disclosure & Plan Tiers (operator) 🔎  (simple by default — NOT gamified)
 
-**Vision.** A shop signs up and is *running in minutes on good defaults* — the core spine only, nothing to configure (§33). Advanced features aren't hidden in a settings dump; they **reveal themselves as the shop becomes eligible**, framed as achievement/progress, not a wall of switches. Simple stays simple; power shows up exactly when the shop is ready for it. This is the engagement engine for the *operator* (the customer-side suki gamification is G5).
+> **Scope correction.** Feature access is **not** gamified. The operator never "earns" features through a game. Features are either **on by default** (the spine + basics), **available on their plan**, or **revealed when the data they need exists** — all presented *plainly*. Gamification belongs to the **customer experience only** (see Theme G + the Gamification note below), and it never gates features.
 
-**Priority:** P2 — extends onboarding + feature toggles (§33). The toggle infra is partly there; this adds the **eligibility + gamification** layer on top.
+**Vision.** A shop signs up and is *running in minutes on good defaults* — the core spine, nothing to configure (§33). Advanced features don't bury the owner in a settings dump; they appear **plainly, when relevant** — either because the shop is on a plan that includes them, or because they now have the data to use them. Simple stays simple; power is one obvious switch away, never a wall.
 
-### The three-state model for every feature
-Every non-core feature is in one of three states, evaluated **server-side**:
-1. **Locked** — prerequisites not met. Shown as "here's how to unlock," never as a dead switch.
-2. **Eligible** — prerequisites met; owner can toggle it on (the existing §33 toggle).
-3. **On** — active. Off = UI hidden, **data preserved** (existing rule).
+**Priority:** P2 — extends onboarding + feature toggles (§33).
 
-Core spine (intake → proof → approve → pay → release) is **always on**, never gated.
+### How a feature becomes available (two plain gates, no game)
+Every non-core feature is **on**, **available (toggle off)**, or **not-on-your-plan** — evaluated server-side:
+1. **Plan gate (commercial).** The feature is included in the shop's tier (Theme J). Not on the tier → shown as a plain upgrade option, never a "locked achievement."
+2. **Readiness gate (functional).** The feature needs data to work — e.g. price-catalog estimates need a seeded catalog; reviews (C2/H2) need ≥1 released job; multi-branch dashboards (§36) need >1 shop; bay map (Theme B) needs bays defined. Until then it's shown as "add X to use this," stated plainly.
+3. **Always-on core.** The spine (intake → proof → approve → pay → release) is on for everyone, every tier, never gated.
 
-### I1 — Eligibility engine (the backbone) 🔎
-A feature unlocks when its prerequisites are satisfied — three kinds of gate:
-- **Readiness gate** (needs data/config first): e.g. price-catalog estimates need a seeded catalog; CSAT reviews (C2/H2) need ≥N released jobs; multi-branch dashboards (§36) need >1 shop in the org; bay map (Theme B) needs bays defined.
-- **Maturity gate** (anti-overwhelm, soft): advanced surfaces appear after the shop has lived in the basics — e.g. campaigns (C3) unlock after the shop has run reminders successfully.
-- **Commercial gate** (paid add-on/plan): custom domain (§33.8) already works this way; multi-branch and high-volume features may join.
-- **Backend:** `FeatureDefinition` (key, category: core/readiness/maturity/commercial, `prerequisites` JSON, default_state) + `FeatureState` per tenant (key, state: locked/eligible/on, unlocked_at, enabled_at). Eligibility is a **pure function** of tenant data + plan, recomputed on relevant events (not hand-set) — so it can't drift. Reuses the per-tenant toggle from §33.
+- **Backend:** `FeatureDefinition` (key, category: core / plan / readiness, `min_plan`, `prerequisites` JSON, default_state) + `FeatureState` per tenant (key, state: on / available / not_on_plan, enabled_at). State is a **pure function** of plan + tenant data — not hand-set, so it can't drift. Reuses the per-tenant toggle from §33.
 
-### I2 — Setup score & guided maturity (gamified onboarding) 🔎
-A visible "shop readiness" progress indicator: % of high-value setup done (logo, services, catalog, first WO, first proof photos, first tracking link sent, staff invited). Completing items unlocks features and advances the score.
-- **Why gamify:** turns a boring setup checklist into momentum; each completed step has a *payoff* (a feature unlocks). Drives activation — the #1 SaaS retention metric.
-- **Backend:** derive from existing data (no manual state) — `SetupTask` definitions + computed completion; the re-openable setup checklist (§33) is the home. Score is a read-time aggregate.
+### I2 — Setup checklist (plain, not a score-to-grind) 🔎
+The re-openable setup checklist (§33): logo, services, catalog, first WO, first tracking link, invite staff. It's a **helpful "what's left" list**, not a points/badge game — completing items just makes the shop more capable (and satisfies readiness gates above).
+- **Backend:** `SetupTask` definitions + computed completion off existing data. Read-time aggregate; no stored game state.
 
-### I3 — Operator achievements & milestones 🔎
-Achievement-style recognition for the *shop*: "100 jobs documented," "1,000 proof photos," "perfect week — zero overdue approvals," "first 5-star review." Light, optional, dismissible.
-- **Why:** ongoing engagement + pride + a gentle nudge toward good behavior (more proof photos, faster approvals). Mirrors customer suki recognition (G5) on the operator side.
-- **Backend:** `Milestone` definitions (key, condition, tier) + `MilestoneGrant` per tenant (achieved_at); conditions evaluated by the same engine as I1, mostly off `EventLog`/`WorkOrder` aggregates. Surfaces optionally in Action Center / dashboard.
-- **Guardrail:** never gamify in a way that incentivizes *gaming the proof* (e.g., don't reward raw photo count in a way that encourages junk photos — reward documented *jobs*, not pixels). Tie to the proof-integrity rules (process-layer L7).
-
-### I4 — "Unlock nudges" (next-best feature) 🔎
-A single, contextual "you're ready for X" prompt at the right moment — not a feature catalog. E.g., after the 10th released job: "You've released 10 jobs — turn on customer reviews to start building your reputation."
-- **Backend:** the eligibility engine (I1) emits a `feature_became_eligible` event → at most one nudge surfaced at a time, frequency-capped, dismissible/snoozeable. Respects the same anti-spam discipline as Layer 2.
+### I3 — Plain "you can now use X" hints 🔎
+When a readiness gate is satisfied (e.g., first job released → reviews become usable), surface **one** quiet, contextual hint — informational, dismissible, frequency-capped. Not a reward animation, not points.
+- **Backend:** eligibility change emits `feature_became_available`; at most one hint at a time, same anti-spam discipline as process-layer L2.
 
 ### Theme I — open questions
-- **Hard gate vs soft nudge?** Should readiness gates *block* enabling (can't turn on estimates with an empty catalog), or just *warn* and let the owner proceed? *Lean: block only where the feature is broken without the prerequisite (estimates need a catalog); soft-nudge everything else so power users aren't handcuffed.*
-- **Can a power user skip the ladder?** An experienced multi-shop owner may want everything on day one. Offer an "I know what I'm doing — show all eligible features" advanced mode? *Lean: yes — gamification is the default, not a cage.*
-- **Where's the commercial line?** Which advanced features are free-when-eligible vs paid add-ons? Needs the pricing/packaging decision (still open in planning-status.md).
-- **Does customer-side gamification (G5 suki) share this engine?** Same `Milestone`/grant machinery, different audience — likely yes, one engine, two surfaces.
+- **Readiness: hard block or soft warn?** *Lean: block only where the feature is genuinely broken without the data (estimates need a catalog); soft-warn everything else so power users aren't handcuffed.*
+- **Power-user "show everything on my plan" mode?** *Lean: yes — readiness hints are a convenience, not a cage.*
+- **Plan line:** which features sit in which tier → resolved by **Theme J**.
+
+> **Gamification note (where it actually lives).** Per the product decision, **gamification = the *customer* experience, not operator feature-gating.** It means the customer-facing surfaces feel alive and rewarding rather than bland: the **suki loyalty** ladder (G5), milestone/anniversary delight (G9), referral perks (G6), a tracking portal that celebrates progress and the finished job (Brief 6/8), and shareable proof to be proud of (G4). All of it is about *relationship warmth and delight* — **never** about locking a customer out of anything. One light `Milestone`/`LoyaltyGrant` engine powers these customer moments (backend already noted under G5/G6/G9).
+
+---
+
+## Theme J — Commercialization & Sales Model 🔎  ⭐ (self-serve, no sales calls)
+
+**Vision.** A shop can discover, try, and pay for ShopTrace **without ever talking to a salesperson** — sign up, run real work, upgrade in-app. Product-led, low-touch, built for a one-person shop to adopt on a Tuesday night.
+
+**Priority:** P1 to *decide* (shapes Theme I tiers + onboarding §33); P2 to *build* billing.
+
+### J1 — Subscription, not one-time (the core recommendation) 🔎
+**Recommendation: recurring subscription, not a one-time license.** ShopTrace is cloud SaaS with **permanently recurring costs** that a single payment can't cover:
+- **Storage grows forever** — proof photos are the product's promise and are kept long-term (R2; process-layer L7/P31). A one-time fee + forever-growing storage = guaranteed loss.
+- **SMS is a hard per-message cost** (Semaphore/Movider) — unbounded under a flat one-time fee.
+- **Hosting, pg_cron jobs, support, and ongoing updates** (BIR posture changes, features) are continuous.
+- **Value is continuous** — reminders (C1) actively bring revenue back *every month*; subscription aligns price with that recurring value.
+- **One-time only fits** local/desktop software with no server costs — not this product.
+
+**PH-friendly framing** (Filipino SMB wariness of "walang katapusang bayad"):
+- **Annual prepay at a discount** — feels closer to one-time, smooths cash flow, lifts retention.
+- **Optional one-time *setup* fee** for white-glove onboarding/data import is fine — but the *platform* is subscription. (Most shops self-serve and won't need it.)
+
+### J2 — Tiers (Basic → Pro → Business) 🔎
+Tier by **value/capability**, not per-seat (per-seat punishes a shop for hiring — bad fit for variable PH staff). Per-**shop** flat price.
+- **Basic** — the always-on spine + essentials: intake/queue, work orders, proof photos, customer tracking portal, ≥1 notification channel, basic history. Gets a shop fully running.
+- **Pro** — the growth layer: service price catalog + estimates/approvals, PMS reminders & campaigns (C1/C3), CSAT/reviews (C2/H2), works gallery + social cards (H1), suki loyalty (G5), analytics/reports.
+- **Business / Multi-branch** — org dashboards (§36), multiple shops, fleet accounts (F2), advanced controls.
+- **Add-ons (any tier):** custom domain (§33.8, already paid), extra SMS credits (J3), white-glove onboarding.
+- **Backend:** `Plan` (key, price, interval, included feature keys, limits) + `Subscription` per tenant (plan, status, current_period, cancel_at). `min_plan` on `FeatureDefinition` (Theme I) reads from here — one source of truth for what a tier unlocks.
+
+### J3 — SMS metered separately (protect the margin) 🔎
+SMS is a pass-through variable cost — **meter it regardless of tier** so heavy senders don't sink the unit economics (process-layer P6).
+- **Model:** each tier includes an SMS credit allotment; beyond it, the shop tops up a `SmsCredit` balance. **Transactional always sends; marketing pauses at zero credits.** Low-balance alert.
+- **Backend:** `SmsCredit` ledger (tenant, balance, top-ups, consumption per send) — ties to the notification engine (L2).
+
+### J4 — Free trial / freemium path 🔎
+Lowest-friction adoption for a PLG motion: a time-boxed **free trial** of Pro (so they feel the magic), then settle to Basic or upgrade. A perpetual **free tier** (capped jobs/month or limited history) is an alternative — decide which.
+- **Backend:** `Subscription.status` covers `trialing`; trial = a dated Pro grant. Reuses the same plan machinery.
+
+### Theme J — open questions
+- **Trial vs freemium?** Time-boxed Pro trial (urgency, simpler) vs a forever-free capped tier (wider top-of-funnel, more infra cost). *Lean: trial first — cheaper to run, and a shop that won't pay after feeling the value probably won't convert from free either.*
+- **Price points & the exact tier line** — needs pilot evidence (AutoLounge) before numbers are set; this is the open "pricing axis & packaging" item in planning-status.md.
+- **Payment rails for collecting the subscription** — GCash / card / bank in PH; a billing provider that supports recurring PH payments (e.g. a local gateway) — separate from the customer-facing static GCash QR (which is for *their* customers paying *them*).
+- **One-time *perpetual* option at all?** *Lean: no for cloud; if a shop truly wants to "own" it, that's the deferred local-edge deployment (§27.4), priced as its own thing.*
 
 ---
 
