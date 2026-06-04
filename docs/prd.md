@@ -498,7 +498,29 @@ Fully free-text parts break "parts used" history and "revenue by service type" r
 
 - Parts entered as line items with **name, optional brand, qty, unit price** — structured fields, no stock tracking.
 - A lightweight, growing **parts name autocomplete list** (seeded from past entries) keeps naming consistent without building inventory.
-- Upgrades cleanly to full inventory in a later phase.
+- Upgrades cleanly to full inventory in a later phase (`InventoryItem` / `StockMovement` — see `feature-backlog.md` Theme F1).
+
+### 11.4 Post-MVP Entities (forward seams — not built in MVP)
+
+These are **not** in the MVP schema, but the core tables should leave clean seams for them so adding them later is additive, not a rewrite. Each is fully specified in `docs/feature-backlog.md`; this table is the index so schema work doesn't paint into a corner.
+
+| Future entity | Backlog home | Seam to preserve in MVP |
+|---------------|--------------|--------------------------|
+| `Bay` / `BayAssignment` | Theme B | Optional `bay_id` on `WorkOrder`; bay history is a derived view |
+| Extended `Reminder` (date/mileage basis, types: PMS/checkin/milestone/thankyou) | Theme C, G | `Reminder` already exists (§11.1) — extend, don't replace |
+| `Survey` (CSAT) | Theme C2, H2 | Linked to `WorkOrder` + `Customer` |
+| `Campaign` / `CampaignRecipient` | Theme C3, G10 | Audience filters read existing `Customer`/`WorkOrder`; opens via `EventLog` |
+| `Warranty` | Theme C4 | Linked to `WorkOrder` + `LineItem` + `Vehicle` |
+| `Inspection` | Theme D1 | Reuses `Photo` pipeline + damage-map (A5) |
+| `EmissionTest` | Theme E2 | Linked to `Vehicle`; feeds `Reminder` |
+| `VehicleShareGrant` (token) | Theme D5, F4 | Same sanitized-history exclusions as the partner API |
+| `InventoryItem` / `StockMovement` | Theme F1 | Supersedes the §11.3 autocomplete list |
+| `FleetAccount` | Theme F2 | `fleet_account_id` on `Vehicle`/`WorkOrder`; reuses credit-release (§16.8) |
+| `ServiceBundle` | Theme F5 | References `ServiceCatalogItem` + templates |
+| `LoyaltyTier` / `LoyaltyReward` / `LoyaltyGrant`, `Referral` | Theme G5, G6 | Visit count derived from `WorkOrder` history |
+| `CustomerNote` + `Customer.preferences` JSON | Theme G8 | Internal-only (RLS); never customer-visible, never in partner API |
+
+**Cross-cutting rules these all inherit:** `tenant_id` + RLS on every table; channel/notification work routes through the reliability layer (§14.6); anything customer-shareable obeys the partner-API exclusions (`integration-api.md`); everything is feature-toggleable (§33) and off = hidden, data preserved.
 
 ---
 
