@@ -2,6 +2,8 @@
 
 > *ShopTrace* is the product. *AutoLounge* is the example shop in mockups (each shop's own logo/color themes its surfaces via per-tenant branding).
 
+> **Start with the visual language first.** Before these screen briefs, run `visual-identity-brief.md` (Prompt A) to choose a distinctive design language + asset kit. These briefs *apply* that language to screens; they don't define it.
+
 These are **creative briefs, not specs.** Each one gives you the context, the user, the job-to-be-done, and the features/data that must be present — then hands you the design. You own layout, hierarchy, components, interaction, and visual direction.
 
 **How to use each brief:**
