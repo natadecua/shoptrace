@@ -47,6 +47,46 @@ Visual car representations and a "collection/library" the shop builds up per car
 
 ---
 
+## Theme B — Visual Bay & Car Status (Queue Board UX) 🔎
+
+**Vision.** Make the admin queue board feel like a live shop floor: cars and bays reflect their current job status visually, progress within a bay is obvious at a glance, and transitions between bays feel intentional and trackable — not just a status tag on a card.
+
+**Priority:** P2 — post-MVP queue UX enrichment. Requires the core queue loop to be stable and at least one real shop's bay layout as reference. Builds on the queue board (Brief 1 / §9) and the car silhouettes from A5.
+
+### B1 — Bay map & occupancy display (strongest) 🔎
+A visual representation of the shop's bays — slots on a floor plan or a simple lane grid — each showing which car is currently in it and at what job status.
+- **Architecture:** new `Bay` entity (or `bay_id` field on `WorkOrder`); shop owner defines bays at onboarding (name + type: inspection / lift / wash / detail / waiting). WO assignment to a bay is optional in MVP, required for this feature.
+- **KISS path:** start with a **list/lane view** (no literal floor plan) showing each bay as a column: car silhouette, plate, job status badge, mechanic avatar, time-in-bay. The floor plan (drag-to-position) is P3.
+- **Why strong:** makes "who's in what bay" instantly visible without hunting through a job list. Operationally useful in a real shop (advisor shouts across the floor less).
+
+### B2 — Per-bay job progress bar 🔎
+Within a bay, a progress bar shows how far the job has advanced: checklist items completed / total, plus required-photo count done.
+- **Data source:** `ChecklistItem` completion + `ProofPhoto` count — already tracked in core. No new data model needed; just aggregation and display.
+- **Display:** progress bar + "X / Y items · Z photos" label on the bay card. Amber when photo gate is not yet met; green when the mechanic can mark done.
+- **KISS:** compute on read (no stored progress field); a materialized view or realtime subscription on checklist item updates drives the display.
+
+### B3 — Bay transition indicator 🔎
+When a car moves from one bay to another (e.g., inspection bay → lift bay → wash bay), the transition is shown as a short animated indicator and logged.
+- **Architecture:** `BayAssignment` join with `assigned_at` / `released_at` timestamps. Multiple assignments per WO = the car's physical journey through the shop.
+- **Display options:**
+  - A **"moving"** state on the car's card (spinner/arrow) between release from one bay and assignment to the next, with elapsed-in-transit time.
+  - A timeline strip on the WO detail showing bay-to-bay movement with timestamps.
+- **KISS path:** the "moving" state is just the window between `released_at` on bay A and `assigned_at` on bay B — no special status needed. A `bay_history` view derives the timeline.
+
+### B4 — Car silhouette status coloring 🔎
+The generic car silhouette (from A5) color-shifts to match job status — e.g., grey (waiting), amber (in progress), green (done / ready for pickup), red (blocked / waiting on approval).
+- **Synergy:** reuses A5 silhouettes; status color is driven by `WorkOrder.status` already in the data model.
+- **KISS:** CSS fill on an inline SVG silhouette, swapped by status class. One silhouette set per body type; color is the only variant. No per-model art.
+- **Caveat:** color alone is not accessible — pair with a status badge or icon for contrast.
+
+### Theme B — open questions
+- Does the shop configure its own bay layout (number + type), or does ShopTrace provide a fixed default? (Recommend: configurable, seeded with a sensible default at onboarding.)
+- Is bay assignment mandatory (every WO must be in a bay) or optional (bays are a richer feature some shops use, some don't)? (Recommend: optional — feature-toggle, absence degrades gracefully to current card-based queue.)
+- Does the mechanic app show the bay map too, or is it strictly the advisor's view?
+- How do multi-lift bays work? (Two cars on the same lift is physically impossible; one lift = one bay slot.)
+
+---
+
 ## Running Idea Log
 
 Newest first. Drop quick ideas here; I'll assess and slot them into a theme.
