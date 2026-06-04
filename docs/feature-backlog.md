@@ -273,6 +273,50 @@ Consented positive `Survey` responses (C2) display on the public page / gallery 
 
 ---
 
+## Theme I — Progressive Feature Eligibility & Gamification 🔎  ⭐ (simple by default, unlock as you grow)
+
+**Vision.** A shop signs up and is *running in minutes on good defaults* — the core spine only, nothing to configure (§33). Advanced features aren't hidden in a settings dump; they **reveal themselves as the shop becomes eligible**, framed as achievement/progress, not a wall of switches. Simple stays simple; power shows up exactly when the shop is ready for it. This is the engagement engine for the *operator* (the customer-side suki gamification is G5).
+
+**Priority:** P2 — extends onboarding + feature toggles (§33). The toggle infra is partly there; this adds the **eligibility + gamification** layer on top.
+
+### The three-state model for every feature
+Every non-core feature is in one of three states, evaluated **server-side**:
+1. **Locked** — prerequisites not met. Shown as "here's how to unlock," never as a dead switch.
+2. **Eligible** — prerequisites met; owner can toggle it on (the existing §33 toggle).
+3. **On** — active. Off = UI hidden, **data preserved** (existing rule).
+
+Core spine (intake → proof → approve → pay → release) is **always on**, never gated.
+
+### I1 — Eligibility engine (the backbone) 🔎
+A feature unlocks when its prerequisites are satisfied — three kinds of gate:
+- **Readiness gate** (needs data/config first): e.g. price-catalog estimates need a seeded catalog; CSAT reviews (C2/H2) need ≥N released jobs; multi-branch dashboards (§36) need >1 shop in the org; bay map (Theme B) needs bays defined.
+- **Maturity gate** (anti-overwhelm, soft): advanced surfaces appear after the shop has lived in the basics — e.g. campaigns (C3) unlock after the shop has run reminders successfully.
+- **Commercial gate** (paid add-on/plan): custom domain (§33.8) already works this way; multi-branch and high-volume features may join.
+- **Backend:** `FeatureDefinition` (key, category: core/readiness/maturity/commercial, `prerequisites` JSON, default_state) + `FeatureState` per tenant (key, state: locked/eligible/on, unlocked_at, enabled_at). Eligibility is a **pure function** of tenant data + plan, recomputed on relevant events (not hand-set) — so it can't drift. Reuses the per-tenant toggle from §33.
+
+### I2 — Setup score & guided maturity (gamified onboarding) 🔎
+A visible "shop readiness" progress indicator: % of high-value setup done (logo, services, catalog, first WO, first proof photos, first tracking link sent, staff invited). Completing items unlocks features and advances the score.
+- **Why gamify:** turns a boring setup checklist into momentum; each completed step has a *payoff* (a feature unlocks). Drives activation — the #1 SaaS retention metric.
+- **Backend:** derive from existing data (no manual state) — `SetupTask` definitions + computed completion; the re-openable setup checklist (§33) is the home. Score is a read-time aggregate.
+
+### I3 — Operator achievements & milestones 🔎
+Achievement-style recognition for the *shop*: "100 jobs documented," "1,000 proof photos," "perfect week — zero overdue approvals," "first 5-star review." Light, optional, dismissible.
+- **Why:** ongoing engagement + pride + a gentle nudge toward good behavior (more proof photos, faster approvals). Mirrors customer suki recognition (G5) on the operator side.
+- **Backend:** `Milestone` definitions (key, condition, tier) + `MilestoneGrant` per tenant (achieved_at); conditions evaluated by the same engine as I1, mostly off `EventLog`/`WorkOrder` aggregates. Surfaces optionally in Action Center / dashboard.
+- **Guardrail:** never gamify in a way that incentivizes *gaming the proof* (e.g., don't reward raw photo count in a way that encourages junk photos — reward documented *jobs*, not pixels). Tie to the proof-integrity rules (process-layer L7).
+
+### I4 — "Unlock nudges" (next-best feature) 🔎
+A single, contextual "you're ready for X" prompt at the right moment — not a feature catalog. E.g., after the 10th released job: "You've released 10 jobs — turn on customer reviews to start building your reputation."
+- **Backend:** the eligibility engine (I1) emits a `feature_became_eligible` event → at most one nudge surfaced at a time, frequency-capped, dismissible/snoozeable. Respects the same anti-spam discipline as Layer 2.
+
+### Theme I — open questions
+- **Hard gate vs soft nudge?** Should readiness gates *block* enabling (can't turn on estimates with an empty catalog), or just *warn* and let the owner proceed? *Lean: block only where the feature is broken without the prerequisite (estimates need a catalog); soft-nudge everything else so power users aren't handcuffed.*
+- **Can a power user skip the ladder?** An experienced multi-shop owner may want everything on day one. Offer an "I know what I'm doing — show all eligible features" advanced mode? *Lean: yes — gamification is the default, not a cage.*
+- **Where's the commercial line?** Which advanced features are free-when-eligible vs paid add-ons? Needs the pricing/packaging decision (still open in planning-status.md).
+- **Does customer-side gamification (G5 suki) share this engine?** Same `Milestone`/grant machinery, different audience — likely yes, one engine, two surfaces.
+
+---
+
 ## Running Idea Log
 
 Newest first. Drop quick ideas here; I'll assess and slot them into a theme.

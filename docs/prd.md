@@ -519,6 +519,8 @@ These are **not** in the MVP schema, but the core tables should leave clean seam
 | `ServiceBundle` | Theme F5 | References `ServiceCatalogItem` + templates |
 | `LoyaltyTier` / `LoyaltyReward` / `LoyaltyGrant`, `Referral` | Theme G5, G6 | Visit count derived from `WorkOrder` history |
 | `CustomerNote` + `Customer.preferences` JSON | Theme G8 | Internal-only (RLS); never customer-visible, never in partner API |
+| `FeatureDefinition` / `FeatureState` (per-tenant locked/eligible/on) | Theme I1 | Extends the §33 toggle; eligibility is a pure function of tenant data/plan |
+| `Milestone` / `MilestoneGrant` (operator + customer gamification) | Theme I3, G5 | One engine, two audiences; conditions off `EventLog`/`WorkOrder` aggregates |
 
 **Cross-cutting rules these all inherit:** `tenant_id` + RLS on every table; channel/notification work routes through the reliability layer (§14.6); anything customer-shareable obeys the partner-API exclusions (`integration-api.md`); everything is feature-toggleable (§33) and off = hidden, data preserved.
 
