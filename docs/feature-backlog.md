@@ -332,6 +332,50 @@ Tier by **value/capability**, not per-seat (per-seat punishes a shop for hiring 
 - **Add-ons (any tier):** custom domain (§33.8, already paid), extra SMS credits (J3), white-glove onboarding.
 - **Backend:** `Plan` (key, price, interval, included feature keys, limits) + `Subscription` per tenant (plan, status, current_period, cancel_at). `min_plan` on `FeatureDefinition` (Theme I) reads from here — one source of truth for what a tier unlocks.
 
+### J2a — First-pass tier sheet (draft — react to this) 🔎
+
+> **Design rule that decides every placement:** *Basic makes you **transparent** (the trust wow that earns adoption); Pro makes you **grow** (automation + money tools); Business runs you **at scale** (multi-branch).* The whole transparency loop must be **fully usable in Basic** — a crippled Basic kills the self-serve adoption motion. Pro is what a hooked shop *wants*, not what an unhooked shop *needs*.
+
+| Capability | Basic | Pro | Business | Ref |
+|---|:--:|:--:|:--:|---|
+| Queue board & intake funnel | ✅ | ✅ | ✅ | §9 |
+| Work orders (create → release) | ✅ | ✅ | ✅ | §10 |
+| Mechanic app: checklist + required proof photos | ✅ | ✅ | ✅ | §12 |
+| Customer tracking portal (status + proof) | ✅ | ✅ | ✅ | §13 |
+| Per-WO customer messaging thread | ✅ | ✅ | ✅ | §14.4 |
+| 1 notification channel (SMS / copy-to-Messenger) | ✅ | ✅ | ✅ | §14 |
+| Payments + proof verify + release (incl. partial/utang) | ✅ | ✅ | ✅ | §16 |
+| Branding/theming + default `{shop}.shoptrace.app` | ✅ | ✅ | ✅ | §33 |
+| Global search · audit log · history | ✅ | ✅ | ✅ | §20/§23 |
+| Service price catalog + estimates/approvals | — | ✅ | ✅ | §15 |
+| Pre-work estimate approval | — | ✅ | ✅ | §15.6 |
+| PMS / return-visit reminders | — | ✅ | ✅ | C1 |
+| Re-engagement / win-back campaigns | — | ✅ | ✅ | C3 |
+| CSAT surveys + public reviews | — | ✅ | ✅ | C2/H2 |
+| Works gallery + social-ready cards | — | ✅ | ✅ | §8.4/H1 |
+| Suki loyalty + referrals (customer gamification) | — | ✅ | ✅ | G5/G6 |
+| Customer memory / preferences · milestone touches | — | ✅ | ✅ | G8/G9 |
+| Digital pre-work inspection report | — | ✅ | ✅ | D1 |
+| Warranty tracking | — | ✅ | ✅ | C4 |
+| PH lifecycle hooks (LTO reg, emissions, coding, lube sticker) | — | ✅ | ✅ | E1–E4 |
+| Reply-by-channel (inbound threaded) | — | ✅ | ✅ | G1 |
+| Reports & analytics (single shop) | — | ✅ | ✅ | §20 |
+| Visual bay/car status board | — | ✅ | ✅ | Theme B |
+| Service bundles · EOD cash report | — | ✅ | ✅ | F5/F3 |
+| Booking + customer-supplied media | — | ✅ | ✅ | §9.6/9.7 |
+| Portable service-history QR · insurance doc package | — | ✅ | ✅ | D5/D4 |
+| Multi-shop org dashboards + benchmarking | — | — | ✅ | §36 |
+| Multiple shops under one org | — | — | ✅ | §11/§36 |
+| Fleet / corporate accounts | — | — | ✅ | F2 |
+| Inventory / parts stock | — | — | ✅ | F1 |
+| Advanced controls (maker-checker thresholds, deep audit) | — | — | ✅ | §21.3 |
+| **Add-ons (any tier):** custom domain · extra SMS credits · white-glove onboarding/import · partner API (consumer app) | ➕ | ➕ | ➕ | §33.8/J3 |
+
+**Debatable placements (flag for your call):**
+- **PMS reminders in Pro, not Basic.** They're the revenue magic *and* the clearest upgrade driver. Lean: Pro — but if reminders prove to be the #1 adoption hook in the pilot, consider a capped version in Basic (e.g., N reminders/month) to bait the upgrade. *Open.*
+- **Digital inspection report (D1)** could anchor Basic instead — it's pure transparency (the Basic theme) and a killer trust feature. Lean: keep Pro for now (it's setup-heavier), revisit.
+- **Partner API / consumer-app integration** — add-on vs Business-only? Lean: add-on once the consumer app ships (parked).
+
 ### J3 — SMS metered separately (protect the margin) 🔎
 SMS is a pass-through variable cost — **meter it regardless of tier** so heavy senders don't sink the unit economics (process-layer P6).
 - **Model:** each tier includes an SMS credit allotment; beyond it, the shop tops up a `SmsCredit` balance. **Transactional always sends; marketing pauses at zero credits.** Low-balance alert.
