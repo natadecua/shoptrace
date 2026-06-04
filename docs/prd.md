@@ -526,6 +526,7 @@ These are **not** in the MVP schema, but the core tables should leave clean seam
 | `PartsOrder` / `SubletJob` + `LineItem.source` | Theme L | BYO/ordered/sublet parts; new WO blocker reasons |
 | `LaborEntry` / `CommissionRule` / `MechanicSkill` | Theme M | porsiyento payout + skill-based assignment; owner-only |
 | `BusinessHours` / `Capacity` / `Slot` / `Appointment` | Theme N | Capacity-aware booking + honest wait band |
+| `WorkOrder.claim_code` + `LoungeDisplayConfig` + `Customer.lounge_optout` | Theme O | Privacy-filtered lounge projection; share queue/Realtime, never the full board |
 
 **Cross-cutting rules these all inherit:** `tenant_id` + RLS on every table; channel/notification work routes through the reliability layer (§14.6); anything customer-shareable obeys the partner-API exclusions (`integration-api.md`); everything is feature-toggleable (§33) and off = hidden, data preserved.
 

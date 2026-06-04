@@ -29,6 +29,7 @@ These are **creative briefs, not specs.** Each one gives you the context, the us
 | 11 Reports & Multi-Shop | §20, §36 |
 | 12 Onboarding & Branding | §33 |
 | 13 Public Website & Queue | `website-prd.md`, §9 |
+| 14 Waiting-Lounge Display | `feature-backlog.md` Theme O, §9 |
 
 ---
 
@@ -218,6 +219,25 @@ These are **creative briefs, not specs.** Each one gives you the context, the us
 **Must support:** shop identity, services, a works gallery (proof), and a **live queue/wait page** showing a status band + estimated wait + "best time to visit," plus a "message us" / inquiry CTA that lands as Pending Intake. (Full content spec in `website-prd.md`.)
 
 **Explore.** A homepage that earns trust in 5 seconds; a queue page that feels live and honest (incl. a "may be outdated" state); the enthusiast-pleasing gallery. Per-tenant brandable.
+
+---
+
+## Brief 14 — Waiting-Lounge Display (ambient progress board)
+
+**Platform:** a large TV / wall screen in the waiting lounge, read from across the room, **semi-public**. **User:** customers physically waiting (and walk-ins) — and it's also a brand moment.
+
+**Job to be done.** Let a waiting customer watch their car's progress at a glance and *know the instant it's ready* — without exposing anything they wouldn't want other customers in the room to see.
+
+**Must surface:**
+- A **non-identifying handle** for each car — default a **claim ticket code** (`A-14`); the shop may switch to car make/model/color or first-name + initial. Recognizable to the owner, meaningless to a stranger.
+- **Status stage** and/or **progress**, and a big, celebratory **"READY FOR PICKUP"** state (the payoff moment).
+- *Optional (shop toggle):* assigned mechanic first name, ETA band.
+- **Privacy-first — never show:** full name, full plate, phone, the bill/price, the diagnosis, or the **bay/location** ("the where"). Bay detail lives on the admin board only.
+- A graceful **idle/ambient mode** (branding, promos, gallery, hours, Wi-Fi) when the lounge is empty.
+
+**Constraints.** Glanceable from 5+ metres; high contrast; auto-refreshing (Realtime); a locked-down kiosk; works portrait (wall) or landscape (TV).
+
+**Explore.** Arrivals-board vs card-grid vs lane; how "Ready" grabs attention across a noisy lounge; the idle/brand state; how it reads under two different shop brands. This is the on-premises cousin of the public web queue page (Brief 13) — share the honest, privacy-reduced spirit.
 
 ---
 

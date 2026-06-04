@@ -521,6 +521,53 @@ Historical load patterns → recommend low-traffic windows on the public queue p
 
 ---
 
+## Theme O — Waiting-Lounge Display (the 4th surface) 🔎  ⭐
+
+**Vision.** A glanceable TV/screen in the waiting lounge that lets customers *physically present* watch their car's progress at a glance — like an airport arrivals board or a clinic "now serving" screen. It's a **new surface** beside admin / customer portal / mechanic app, and its defining constraint is that it's **semi-public**: other customers, walk-ins, and anyone in the lounge can see it. So it is a **deliberately reduced, privacy-filtered projection** of the queue board — never the board itself.
+
+**Priority:** P2 — high-delight, reinforces the transparency promise in the room where anxiety lives. Reuses the queue/WO data + Realtime; the work is the **privacy projection** and the ambient UX.
+
+### The core question: what may a customer let *other* customers see?
+Default to the **least-identifying thing that still lets the owner recognize their own car.** The board must be useless to a stranger and instantly clear to the owner.
+
+**Show (safe, glanceable):**
+- A **non-identifying handle** — recommend a **claim ticket code** (e.g. `A-14`), issued at intake and printed on the job card / sent by SMS. Zero PII, recognizable only to its owner.
+- **Status stage** (Received → In progress → Final check → **Ready**) and/or a **progress %**.
+- A big, celebratory **"READY FOR PICKUP"** state — the main payoff (the airport "now boarding" moment).
+- *Optional, shop-toggle:* assigned **mechanic first name** (personal touch + accountability) and an **ETA band**.
+
+**Hide (sensitive — never on a shared screen):**
+- Full name, full plate, phone — identity/theft-targeting risk.
+- The **bill / price** — wealth signal, embarrassment.
+- The **specific issue / diagnosis** — "your brakes are shot" is private.
+- The **physical location / bay** — *the "where"* you flagged: revealing where a specific car sits is a security risk (someone could walk to it). Theme B's bay detail stays on the **admin** board only.
+
+**Identifier granularity is a per-tenant choice**, defaulting to the most private:
+1. Claim code `A-14` (default, zero PII) →
+2. Car only: `Silver Vios` (no plate) →
+3. First name + last initial: `Juan D.` →
+4. Masked plate: `ABC ••12`.
+Plus a **per-customer opt-out**: their car shows as a generic "in service" with code only, or is hidden entirely (shop's choice).
+
+### O1 — Lounge display surface (read-only, Realtime) 🔎
+A locked-down kiosk view that auto-refreshes as statuses change.
+- **Backend:** a server-side **lounge projection** that strips each WO to the allowed fields only — the full board is *never* sent to the device (defense in depth: a stolen/snooped lounge TV only ever held the filtered view). A dedicated **display token / kiosk session** scoped to the tenant, read-only, no admin reachability, auto-reconnect. Realtime subscription drives tile updates.
+- **Backend entities:** `WorkOrder.claim_code` (short, per-day, human-friendly); `LoungeDisplayConfig` per tenant (identifier granularity, show-mechanic, show-eta, show-progress, idle-mode content); `Customer.lounge_optout` (or `WorkOrder.lounge_visible`).
+
+### O2 — "Ready for pickup" emphasis 🔎
+The one state that earns the screen its keep — a car flipping to **Ready** animates/highlights so the owner notices from across the lounge (optional chime).
+
+### O3 — Idle / ambient mode 🔎
+When the lounge is empty or to fill space: shop branding, today's promos, the works gallery (H1), hours, Wi-Fi password, safety notes — a brand moment, not a blank screen.
+
+### Theme O — open questions
+- **Default identifier:** claim code (most private) vs car make/model/color (most *recognizable* without a ticket). *Lean: claim code default, shop can switch to car description.*
+- **Consent model:** opt-out (on by default, customer can hide) vs opt-in (off by default)? *Lean: opt-out with the privacy-safe claim-code default — low risk, high utility; offer a visible "hide me" path.*
+- **Relationship to the public web queue (§9 / website):** the lounge screen is the *on-premises, near-real-time* cousin of the public *remote* wait page — share the projection logic, differ on freshness + identifier (the web page is fully public → even more reduced).
+- Multiple screens / orientation (portrait wall-mount vs landscape TV) — a UI concern for the brief.
+
+---
+
 ## Persona Refinements & Journey Gaps 🔎
 
 **Purpose.** A finer-grained sweep than the themes above — per persona, split into **Major** (real capability), **Polish** (small UX win on an existing feature), **Nice-to-have** (delight add-on), and **Journey gaps** (a step in a real flow we don't yet handle). Most are P2/P3. Codes are referenceable (e.g. `MEC-J2`).
