@@ -2,7 +2,8 @@
 
 **Last updated:** 2026-06-02  
 **Phase:** Planning → about to enter build (P0 spike)  
-**Authoritative docs:** `docs/prd.md` (v1.8) · `docs/website-prd.md` · `docs/design-prompts.md` · `docs/consumer-app-prd.md` (parked) · `docs/user-journeys.md` · `docs/integration-api.md`  
+**Authoritative docs:** `docs/prd.md` (v1.8) · `docs/roadmap.md` (consolidated priorities) · `docs/feature-backlog.md` (themes A–O) · `docs/process-layer.md` (UI-independent engine, gaps P1–P44) · `docs/website-prd.md` · `docs/design-prompts.md` (14 briefs) · `docs/consumer-app-prd.md` (parked) · `docs/user-journeys.md` · `docs/integration-api.md`  
+**Governing principle:** *simpler than paper, or it dies* — see `roadmap.md` §0. Adoption lives on the mechanic + advisor surfaces.  
 **Naming:** *ShopTrace* = the product/platform · *AutoLounge* = the pilot/example shop (tenant #1)
 
 ---

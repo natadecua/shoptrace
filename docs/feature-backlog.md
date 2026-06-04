@@ -347,8 +347,9 @@ Tier by **value/capability**, not per-seat (per-seat punishes a shop for hiring 
 | Payments + proof verify + release (incl. partial/utang) | ✅ | ✅ | ✅ | §16 |
 | Branding/theming + default `{shop}.shoptrace.app` | ✅ | ✅ | ✅ | §33 |
 | Global search · audit log · history | ✅ | ✅ | ✅ | §20/§23 |
-| Service price catalog + estimates/approvals | — | ✅ | ✅ | §15 |
-| Pre-work estimate approval | — | ✅ | ✅ | §15.6 |
+| Found-issue approval loop (approve / decline / ask) | ✅ | ✅ | ✅ | §15 — *spine, not Pro (C1)* |
+| Service price **catalog** (reusable price book) | — | ✅ | ✅ | §15.7 |
+| Pre-work estimate approval (repair path) | — | ✅ | ✅ | §15.6 |
 | PMS / return-visit reminders | — | ✅ | ✅ | C1 |
 | Re-engagement / win-back campaigns | — | ✅ | ✅ | C3 |
 | CSAT surveys + public reviews | — | ✅ | ✅ | C2/H2 |
