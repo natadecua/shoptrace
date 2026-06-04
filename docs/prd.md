@@ -522,6 +522,10 @@ These are **not** in the MVP schema, but the core tables should leave clean seam
 | `FeatureDefinition` / `FeatureState` (on / available / not-on-plan) | Theme I | Extends the §33 toggle; state = pure function of plan + tenant data (not gamified) |
 | `Milestone` / `MilestoneGrant` (customer loyalty/delight only) | Theme G5/G9 | Customer-experience gamification; never gates features; off `EventLog`/`WorkOrder` aggregates |
 | `Plan` / `Subscription` / `SmsCredit` (commercialization) | Theme J | Self-serve tiers; SMS metered separately; gates `min_plan` features |
+| `InsuranceClaim` + `WorkOrder.payer_type` + `Approval.approver_type` | Theme K | Payer/approver generalization (customer/insurer/fleet/warranty) |
+| `PartsOrder` / `SubletJob` + `LineItem.source` | Theme L | BYO/ordered/sublet parts; new WO blocker reasons |
+| `LaborEntry` / `CommissionRule` / `MechanicSkill` | Theme M | porsiyento payout + skill-based assignment; owner-only |
+| `BusinessHours` / `Capacity` / `Slot` / `Appointment` | Theme N | Capacity-aware booking + honest wait band |
 
 **Cross-cutting rules these all inherit:** `tenant_id` + RLS on every table; channel/notification work routes through the reliability layer (§14.6); anything customer-shareable obeys the partner-API exclusions (`integration-api.md`); everything is feature-toggleable (§33) and off = hidden, data preserved.
 

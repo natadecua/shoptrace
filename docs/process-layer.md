@@ -33,6 +33,9 @@ The work-order and queue statuses (§9.4, §10.3) are only useful if the **trans
 - **P3 — Comeback / reopen.** Customer returns post-release (warranty or complaint). New linked WO (`parent_work_order_id`) vs reopen the old one? *Recommend: always a new WO linked to the original — keeps history and audit clean, feeds rework-rate (Layer 8).*
 - **P4 — Cancellation matrix.** Who can cancel at each stage, and what cleanup (release held photos? void estimate? notify customer?). Needs a per-status cancellation policy.
 - **P5 — Abandonment.** Car never picked up / customer ghosts. Aging + lien handling + storage-fee accrual? Define an `abandoned` path and its dunning.
+- **P38 — Release authorization (3rd-party pickup).** Who may claim the car? Owner vs an authorized representative (driver, family). Need a release-to-other-than-owner path with ID/authorization capture + a gate pass. Currently `Release` (§11.1) assumes the customer — generalize to "released to whom, authorized by whom."
+- **P39 — Key & belongings custody.** Physical key tracking and a **valuables/contents checklist at intake** (visible items in the car). Doubles as a dispute shield ("the watch was there at intake / it wasn't"). New intake-time capture; ties to the inspection report (D1).
+- **P43 — Estimate→final variance guard.** If the final bill materially exceeds the approved estimate (beyond a tolerance %), forward motion to release is **gated on re-approval** — enforces the "no surprise bill" trust promise. Define the tolerance (per-tenant config) and the re-approval flow. *This is a trust gate, not just a warning.*
 
 ---
 
@@ -103,6 +106,8 @@ RLS, roles, portal tokens, maker-checker, immutable audit. (§21, §23, §27.)
 - **P16 — Maker-checker thresholds.** Per-tenant configurable amount/percentage that trips the second approver. Who sets it (owner only). What if the shop is solo (owner = only trusted role)? *Recommend: solo-owner can self-approve but it's still logged as an override.*
 - **P17 — Break-glass / override logging.** Owner overrides (force-release, force-unlock) — always allowed but always audited with a reason. Confirm the override list.
 - **P18 — Customer identity on the portal.** No login beyond a PIN — how is PIN set/reset, and what stops link-sharing abuse? Rate-limit + optional PIN per WO.
+- **P42 — Shared-device mechanic sessions.** One tablet shared across mechanics in the bay. Need fast user-switch + per-job PIN (already noted, §27.2) so **who-did-what attribution** stays correct on a shared device — proof photos and labor entries must bind to the *actual* mechanic, not the logged-in device. Define the session/handoff model.
+- **P44 — Non-portal approval legality.** Approve via SMS reply ("reply YES") or a Messenger reply, not just the portal — convenient, but the approval must still be **auditable and legally sufficient** (who, when, from which number/account). Define what counts as a valid approval per channel; default remains typed-name + timestamp + IP in the portal (§15).
 
 ---
 
@@ -124,6 +129,8 @@ Billing math and payment workflow — must be exact and BIR-posture-correct (§1
 - **P21 — Discount stacking.** Senior/PWD **+** promo on the same bill — allowed, and in what order? Legal note: auto-repair generally isn't in the mandated senior-discount list (confirm w/ accountant) — so this is a *recorded courtesy* discount, stackable per shop policy.
 - **P22 — Receivables aging.** "Utang" needs an aging view + dunning schedule (Layer 3). Define buckets (0–30/31–60/60+) and the chase cadence.
 - **P23 — Price-list versioning.** When `ServiceCatalogItem` prices change, historical bills must keep the price charged at the time. Snapshot line prices onto the WO (don't reference live catalog). Confirm.
+- **P40 — Estimate validity / expiry.** Quotes go stale (parts prices move). An estimate should carry a validity window; past it, a re-quote is required before approval. Define default validity (per-tenant) + the re-quote flow. Ties Theme L (parts sourcing) and Theme K3 (insurance supplementals).
+- **P41 — Deposit / downpayment policy.** When is a downpayment required (parts order, big-ticket job, BYO-parts labor)? Define trigger rules + amount basis (% of estimate / fixed) so deposits aren't ad-hoc. Reuses `Deposit` (§11.1).
 
 ---
 
@@ -248,3 +255,10 @@ Outbound contracts — already specced; noted here as a layer so the engine view
 | P35 | Audit | Audit coverage list | Enumerate audited actions |
 | P36 | Integration | Webhook reliability | Sig + idempotency + dead-letter |
 | P37 | Integration | Payment gateway later? | **Decision needed** |
+| P38 | Lifecycle | Release auth / 3rd-party pickup | Released-to + authorized-by + gate pass |
+| P39 | Lifecycle | Key & belongings custody at intake | Valuables checklist (dispute shield) — **open** |
+| P40 | Money | Estimate validity / expiry | Validity window + re-quote |
+| P41 | Money | Deposit / downpayment policy | Trigger rules + amount basis — **open** |
+| P42 | Access | Shared-device mechanic attribution | Fast switch + per-job PIN binds to real mechanic |
+| P43 | Lifecycle | Estimate→final variance guard | Re-approval gate over tolerance % |
+| P44 | Access | Non-portal approval legality | Define valid approval per channel |

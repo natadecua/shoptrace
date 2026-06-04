@@ -393,6 +393,130 @@ Lowest-friction adoption for a PLG motion: a time-boxed **free trial** of Pro (s
 
 ---
 
+## Theme K — Insurance & LOA Jobs 🔎  (PH-specific, high-value, different money flow)
+
+**Vision.** Accredited shops do a large share of revenue on **insurance claims**, and that flow is fundamentally different: the **payer is the insurer, not the car owner**; the approver is an **adjuster**, not the customer; hidden damage needs **supplemental approval**; and the customer only pays the **deductible/participation**. The current model assumes customer-funded, customer-approved jobs — this theme generalizes it.
+
+**Priority:** P2 — large addressable revenue for accredited shops; significant flow divergence (assess carefully before committing).
+
+### K1 — Payer abstraction (who funds the job) 🔎
+A work order's funding source isn't always the owner.
+- **Backend:** `WorkOrder.payer_type` (customer / insurer / fleet / warranty / internal). Generalizes billing, approval routing, and release rules. Fleet (F2) and warranty (C4) reuse the same seam.
+
+### K2 — Insurance claim + LOA tracking 🔎
+Capture the claim and the Letter of Authority that authorizes the work and the amount.
+- **Backend:** `InsuranceClaim` (insurer, policy_no, claim_no, loa_ref, approved_amount, deductible, participation, adjuster_contact, status). Links to the WO; the LOA amount becomes the approved ceiling.
+
+### K3 — Adjuster as approver + supplemental estimates 🔎
+Approvals route to the **insurer/adjuster**, not the owner; hidden damage found mid-repair triggers a **supplemental** estimate for adjuster sign-off (work pauses on the affected line).
+- **Backend:** `Approval.approver_type` (customer / adjuster); a supplemental estimate is a child estimate against the same claim. Reuses the partial-approval rule (P2).
+
+### K4 — Deductible collection + parts choice 🔎
+Customer pays only the deductible/participation; insurer pays the rest. Parts choice (casa/OEM vs aftermarket) is often dictated by policy.
+- **Backend:** split the bill — `Payment` from customer (deductible) vs receivable from insurer (aging, Layer 5/P22). Parts source/grade recorded (ties Theme L4).
+
+### Theme K — open questions
+- **Who is "the customer" on the tracking portal for an insurance job** — the owner still watches their car, but approvals are the adjuster's. Likely: owner gets status/proof; adjuster gets a separate approval link.
+- Deductible timing — collected at release, or before work starts?
+- Insurer receivables can age for months — needs the aging/dunning model (P22) tuned for B2B terms.
+
+---
+
+## Theme L — Parts Sourcing, Sublet & Customer-Supplied Parts 🔎  (PH reality)
+
+**Vision.** Real jobs stall and branch on **parts**: the part isn't in stock and must be ordered; the customer **brought their own part** (extremely common in PH); or the work is **sublet** to an outside specialist (machine shop, upholstery, aircon, auto-electrical). The model needs to represent all three without breaking history or billing.
+
+**Priority:** P2. L1 (customer-supplied) and L2 (procurement) are near-term realistic; L3 (sublet) follows.
+
+### L1 — Customer-supplied parts ("BYO parts") 🔎
+Customer brings the part; shop bills labor only — but is **not liable** for a BYO part's failure.
+- **Backend:** `LineItem.source` = `customer_supplied`; price ₱0 but labor still billed; a recorded **warranty-waiver acknowledgment** on BYO parts (protects the shop). Surfaces on the bill clearly ("customer-supplied — no parts warranty").
+
+### L2 — Parts procurement / backorder 🔎
+Part not in stock → order from a supplier → **job waits on parts** (a real blocker with an ETA) → customer notified of the delay.
+- **Backend:** `PartsOrder` (supplier, line_item, eta, status: ordered/received/cancelled); WO blocker reason `waiting_on_parts`; ETA change triggers a customer status update (channel layer).
+
+### L3 — Sublet / outside work 🔎
+Part of the job is sent to an external vendor (machining, upholstery, aircon, electrical). Track vendor, cost, markup, turnaround; the job is **blocked on sublet** meanwhile.
+- **Backend:** `SubletJob` (vendor, description, cost, markup, status, eta); WO blocker reason `waiting_on_sublet`; vendor managed list per tenant.
+
+### L4 — Parts sourcing options & transparency 🔎
+Offer the customer a **choice** — casa/OEM vs aftermarket vs surplus — with price + warranty trade-off shown. Turns a markup into a transparent decision.
+- **Backend:** alternative `LineItem` options grouped as a choice the customer/advisor selects; ties to estimates (§15) and the price catalog (§15.7).
+
+### Theme L — open questions
+- BYO-part warranty waiver — typed acknowledgment in the portal, or paper? (Lean: portal ack, audited.)
+- Is parts markup ever shown to the customer, or only the final price? (Shop-config; default hide markup, show final.)
+- Sublet vendors — a managed directory per shop, or free-text? (Lean: managed list, grows over time.)
+
+---
+
+## Theme M — Labor, Mechanic Productivity & Commission (porsiyento) 🔎  (PH pay model)
+
+**Vision.** Many PH shops pay mechanics by **commission ("porsiyento")** or flat-rate hours, not just salary. The system already knows who did what — so it can compute labor, earnings, and (carefully) productivity, turning payroll from a notebook guess into a byproduct of the work.
+
+**Priority:** P2/P3. High value for owners; commission models vary wildly, so config flexibility is the hard part.
+
+### M1 — Labor time / flat-rate capture 🔎
+Per-job, per-mechanic labor: either clocked (start/stop) or **flat-rate book time** per service.
+- **Backend:** `LaborEntry` (work_order, mechanic, hours or start/stop, rate_basis). Feeds billing labor lines and commission.
+
+### M2 — Commission / porsiyento computation 🔎
+Per-mechanic earnings from the jobs they did; a payout report per period.
+- **Backend:** `CommissionRule` per tenant (basis: % of labor / per-job / per-flat-hour; rate). Payout = aggregate over `LaborEntry` × rule. Owner-only.
+
+### M3 — Multi-mechanic credit split 🔎
+Two mechanics on one job split the labor credit/commission.
+- **Backend:** multiple `LaborEntry` rows per WO with a contribution share; commission divides accordingly.
+
+### M4 — Mechanic productivity & quality (sensitive) 🔎
+Jobs/day, avg time, **comeback rate per mechanic** (quality). Powerful but morale-sensitive.
+- **Guardrail:** owner-only; frame as coaching, not surveillance; never customer-visible. Comeback attribution must be fair (ties P3 comeback linking).
+
+### M5 — Skill-based assignment 🔎
+Route diesel/EV/electrical jobs to mechanics with the matching skill.
+- **Backend:** `MechanicSkill` tags; assignment suggests qualified mechanics (ties Theme A1 car-type procedures).
+
+### Theme M — open questions
+- Commission basis varies hugely shop-to-shop — needs a flexible rule config, not a hard-coded formula. How flexible before it's overengineered?
+- Productivity metrics: surface to the mechanic themselves (self-improvement) or strictly owner-only? (Lean: owner-only first.)
+- Does labor commission interact with the bill (customer sees labor) vs internal payout (customer never sees)? Keep strictly separate.
+
+---
+
+## Theme N — Capacity-Aware Scheduling & Honest Wait 🔎  (makes the live queue real)
+
+**Vision.** The public **live wait band** and **booking** (§9, `website-prd.md`) are only credible with a real **capacity model** behind them — bays × mechanics × typical job time. Otherwise the wait is a guess and booking overbooks. This is the engine that makes "is it worth going now?" honest.
+
+**Priority:** P2. Booking is already P2 (§9.6); this gives it a spine.
+
+### N1 — Capacity model 🔎
+Throughput = available bays × mechanics × avg job duration; current open load → an honest wait band.
+- **Backend:** `BusinessHours` + `Capacity` config (bays, concurrent jobs); wait band derived from open `WorkOrder`s vs capacity. Reuses Theme B bays if defined.
+
+### N2 — Capacity-constrained appointment slots 🔎
+Bookable slots that **can't overbook** — a booking reserves capacity.
+- **Backend:** `Slot`/`Appointment` (slot, service_type est. duration, status: booked/confirmed/arrived/no_show/cancelled); slot availability = capacity − reserved.
+
+### N3 — No-show handling + appointment reminders 🔎
+Remind before the slot; track no-shows; grace then release the slot.
+- **Backend:** scheduled reminder (Layer 3) before slot; `Appointment.status` lifecycle; no-show rate per customer (gentle).
+
+### N4 — Triage / express lanes 🔎
+Quick jobs (oil change) shouldn't sit behind a 2-day engine job. Express vs full-service lanes; emergency/VIP priority.
+- **Backend:** `WorkOrder.lane`/`priority`; capacity can reserve express slots. Surfaces on the queue board (Theme B).
+
+### N5 — "Best time to visit" from history 🔎
+Historical load patterns → recommend low-traffic windows on the public queue page.
+- **Backend:** aggregate historical `WorkOrder` arrival/throughput by hour/day; powers the website "best time" hint.
+
+### Theme N — open questions
+- **Cold start:** avg job time is unknown before history exists — seed with service-type defaults, refine over time. Acceptable?
+- Walk-in vs booked capacity split — reserve some capacity for walk-ins (PH norm) vs fully bookable?
+- Manual override of the public wait band when the owner knows better (e.g., a mechanic called in sick)?
+
+---
+
 ## Running Idea Log
 
 Newest first. Drop quick ideas here; I'll assess and slot them into a theme.
