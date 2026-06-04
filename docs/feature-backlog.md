@@ -206,6 +206,8 @@ Hold-to-speak issue description via the device's **native** speech API (no cloud
 
 **Vision.** The app is the **proof and the memory**; the *relationship* breathes through whatever channel the customer already uses. Never force a portal login to talk to the shop, never trap the proof, never replace the humans — facilitate them. This is the cultural heart of a PH shop: the *suki* relationship.
 
+> **No parked app required — this rides MVP channels.** Customer communication does **not** depend on the parked native consumer app (*Garage by ShopTrace*, §34 / `consumer-app-prd.md`). It rides the MVP channels: **SMS** (Semaphore/Movider), **copy-to-Messenger** (§14.5), the **no-install web tracking portal** (§13), and the shop's **real phone/Messenger/Viber** (G7). Two different "customer-side" things: the *web portal* ships in MVP and is how the shop and customer interact; the *native app* is a separate consumer product and is **never** the shop's communication channel. Most of Theme G works in MVP today; G1 (reply-by-channel) is the one real backend enhancement (inbound webhooks), bounded by Meta's 24h window — so SMS stays the backbone outside it.
+
 **Priority:** P2 — the relationship layer on top of the transparency core. Builds on Threads/Messages (§14.4), Messenger scope (§14.5), and notification reliability (§14.6).
 
 ### G1 — Reply-by-channel (no portal required) (strongest) 🔎
