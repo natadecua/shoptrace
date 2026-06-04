@@ -399,6 +399,8 @@ Lowest-friction adoption for a PLG motion: a time-boxed **free trial** of Pro (s
 
 **Priority:** P2 — large addressable revenue for accredited shops; significant flow divergence (assess carefully before committing).
 
+> **⚠️ Money-sensitive & posture-bound — keep DEFERRED (P2/P3), not MVP.** Highest flow-divergence + money-risk for the least early validation. **BIR rule (inherits §16.7): ShopTrace never issues an OR/SI.** For insurance it produces a **Statement of Account** to the insurer (stamped *"NOT an Official Receipt"*); the OR the insurer needs is issued by the shop through their **own** BIR-registered channel, and ShopTrace stores only the **OR reference**. SoA ≠ OR → not a BIR trigger, no CAS accreditation. **Bug de-risking:** every total is a *draft* until human-verified; deterministic tested math; price snapshots (P23); immutable audit; nothing auto-transmitted to insurers/BIR; the shop's books remain authoritative — ShopTrace is *not* the accounting system. Insurer amounts are shown as **receivables**, never as recognized revenue, in any export.
+
 ### K1 — Payer abstraction (who funds the job) 🔎
 A work order's funding source isn't always the owner.
 - **Backend:** `WorkOrder.payer_type` (customer / insurer / fleet / warranty / internal). Generalizes billing, approval routing, and release rules. Fleet (F2) and warranty (C4) reuse the same seam.
@@ -427,6 +429,8 @@ Customer pays only the deductible/participation; insurer pays the rest. Parts ch
 **Vision.** Real jobs stall and branch on **parts**: the part isn't in stock and must be ordered; the customer **brought their own part** (extremely common in PH); or the work is **sublet** to an outside specialist (machine shop, upholstery, aircon, auto-electrical). The model needs to represent all three without breaking history or billing.
 
 **Priority:** P2. L1 (customer-supplied) and L2 (procurement) are near-term realistic; L3 (sublet) follows.
+
+> **⚠️ BYO-parts risk & method.** A customer-supplied part = **₱0 line (no sale → no BIR angle)**, labor billed normally. Liability is the real risk: the shop must not be on the hook for a part it didn't sell. Method: **recorded warranty waiver** (typed/portal, audited), **photo the part at receipt** (condition + identity, inverse of D2), and the shop's **right to decline install** with a documented disclaimer. Counterfeit/wrong-part safety is covered by the receipt photo + disclaimer. Bill labels it clearly: *"customer-supplied — no parts warranty."*
 
 ### L1 — Customer-supplied parts ("BYO parts") 🔎
 Customer brings the part; shop bills labor only — but is **not liable** for a BYO part's failure.
@@ -514,6 +518,123 @@ Historical load patterns → recommend low-traffic windows on the public queue p
 - **Cold start:** avg job time is unknown before history exists — seed with service-type defaults, refine over time. Acceptable?
 - Walk-in vs booked capacity split — reserve some capacity for walk-ins (PH norm) vs fully bookable?
 - Manual override of the public wait band when the owner knows better (e.g., a mechanic called in sick)?
+
+---
+
+## Persona Refinements & Journey Gaps 🔎
+
+**Purpose.** A finer-grained sweep than the themes above — per persona, split into **Major** (real capability), **Polish** (small UX win on an existing feature), **Nice-to-have** (delight add-on), and **Journey gaps** (a step in a real flow we don't yet handle). Most are P2/P3. Codes are referenceable (e.g. `MEC-J2`).
+
+### Mechanic (in the bay)
+**Major**
+- `MEC-1` Parts request from the bay — "I need this part" routes to advisor/parts (ties L2) without leaving the job.
+- `MEC-2` Escalate / request help from a senior mechanic; reassign or co-assign a job (ties MEC-J4).
+- `MEC-3` Job pause/resume with a reason (waiting on parts / customer / lift / sublet) — feeds blocker states + honest wait (Theme N).
+
+**Polish**
+- `MEC-4` Big "next required step" focus mode; required photos unmistakable (already a Brief-4 ask — track here).
+- `MEC-5` Haptic/sound confirmation on capture (gloves, dim bay); in-app flashlight toggle.
+- `MEC-6` Taglish quick-note presets + per-checklist-item voice note (extends F6).
+- `MEC-7` "Reference look" photo for a step before starting (ties Theme A3 visual guides).
+
+**Nice-to-have**
+- `MEC-8` Quick reference: torque specs / fluid capacities per vehicle (ties Theme A1).
+- `MEC-9` Flag a missing/broken shop tool → owner sees (small ops signal).
+- `MEC-10` Personal "my work today" recap (jobs done, photos taken) — pride, not surveillance.
+
+**Journey gaps**
+- `MEC-J1` Working several jobs at once (real) — fast context-switch between active jobs.
+- `MEC-J2` End-of-shift handoff — a half-done job passed to the next shift with state + notes.
+- `MEC-J3` Assigned a job that isn't really theirs — decline/reassign path.
+- `MEC-J4` Can't complete (needs senior/specialist) — explicit escalation, job keeps moving.
+
+### Advisor / Front desk
+**Major**
+- `ADV-1` Clone / re-quote last job for a returning customer (intake in seconds; ties F4/F5).
+- `ADV-2` Bulk queue actions (assign mechanic, send update, change lane) for a busy board.
+- `ADV-3` Internal staff notes / shift-handover log on the shop (not the WO) — who's covering what.
+
+**Polish**
+- `ADV-4` Command palette / keyboard shortcuts for power users on the desktop board.
+- `ADV-5` Click-to-call that logs the call against the WO (ties G7); one-tap "send gate pass."
+- `ADV-6` Saved queue views/filters (by mechanic, by lane, by overdue).
+
+**Nice-to-have**
+- `ADV-7` Sound/desktop alert on new Pending Intake (don't miss a walk-in/inquiry).
+- `ADV-8` "Today at a glance" strip (jobs in, due out, money to collect).
+
+**Journey gaps**
+- `ADV-J1` Multiple advisors — who *owns* a job (claim/assignment) to avoid double-handling.
+- `ADV-J2` Covering for an absent advisor — handover without losing context.
+- `ADV-J3` Handling an angry/walk-in escalation while running the board — triage/priority bump.
+- `ADV-J4` Role-collapse: the advisor is *also* the mechanic and owner (solo shop) — one-person mode (ties OWN-J1).
+
+### Owner / Manager
+**Major**
+- `OWN-1` Receivables & cash-flow dashboard — outstanding/utang + insurer aging (ties P22, K).
+- `OWN-2` Targets vs actuals (revenue/jobs goals) with simple progress.
+- `OWN-3` Anomaly/trust alerts — unusual discount, void/refund, after-hours access, force-release (fraud/trust; ties audit L9).
+- `OWN-4` Export to accountant (CSV/Excel) — **export, never issue** (BIR-safe, §16.7); the bridge to their bookkeeper.
+
+**Polish**
+- `OWN-5` Morning briefing (AM digest) to complement the EOD report (F3).
+- `OWN-6` Owner PWA / mobile oversight — approvals + numbers on the go.
+- `OWN-7` Per-staff scoped permissions fine-tuning (who can discount, refund, release).
+
+**Nice-to-have**
+- `OWN-8` Benchmark vs own past periods ("this month vs last") even for single shop.
+- `OWN-9` Shareable owner snapshot (a clean monthly summary they can keep).
+
+**Journey gaps**
+- `OWN-J1` Solo owner = advisor + mechanic + cashier — collapsed-role UX that isn't overwhelming.
+- `OWN-J2` Remote oversight while traveling — approvals, alerts, no on-site presence.
+- `OWN-J3` Opening a new branch — clone settings/catalog/templates from an existing shop (ties §36).
+- `OWN-J4` Offboarding staff — revoke access + reassign their open jobs + preserve audit (ties P-gaps).
+- `OWN-J5` Owner override / break-glass with reason, always audited (ties P17).
+
+### Customer
+**Major**
+- `CUS-1` Self-service booking (ties Theme N) — pick a slot from the portal/website.
+- `CUS-2` Multi-vehicle view — one customer, all their cars + each one's history (ties D5/§11).
+- `CUS-3` Request additional work mid-job from the portal (customer-initiated upsell → advisor prices it).
+- `CUS-4` Formal dispute/complaint path — a structured "I have an issue with this" that the owner sees (ties SYS-2).
+
+**Polish**
+- `CUS-5` Progress %, estimated completion / countdown, and a celebratory "done & released" state.
+- `CUS-6` Channel preference for "notify me when ready" (SMS vs Messenger); EN/Taglish toggle.
+- `CUS-7` Save shop to home screen (PWA); add next-service to phone calendar.
+
+**Nice-to-have**
+- `CUS-8` Kudos to a specific mechanic ("salamat Kuya Jun!") — ties staff profiles (D3) + morale.
+- `CUS-9` Rate aspects (cleanliness, communication, value), not just stars (richer CSAT, ties C2).
+- `CUS-10` Payment history / saved GCash references for the customer's own record.
+
+**Journey gaps**
+- `CUS-J1` The customer who never opens the link (low digital literacy / no smartphone) — call fallback + advisor-assisted mode that still logs proof.
+- `CUS-J2` Assisted/elderly mode — advisor walks them through approval in person, captured properly.
+- `CUS-J3` Ownership transfer / sold the car — history survives, prior-owner PII governed (ties D5, P26).
+- `CUS-J4` After-hours pickup — release flow when staff aren't present (ties P38).
+- `CUS-J5` Someone other than the owner drops off / picks up (ties P38 release auth).
+
+### Cross-cutting / System
+**Major**
+- `SYS-1` Internal staff notifications — new approval received, new customer message, job assigned, intake waiting (the staff-side of the channel engine, L2).
+- `SYS-2` Comeback/complaint & QC workflow — final-check role + structured comeback handling (ties P3 + M4 quality).
+- `SYS-3` Data export / account portability — the shop owns and can take its data (trust + DPA).
+
+**Polish**
+- `SYS-4` Proof-photo annotation/markup (draw to point at the issue) + before/after slider (ties §10.5, §13).
+- `SYS-5` Tags/labels on work orders (e.g., "warranty", "fleet", "VIP", "comeback") for filtering + reporting.
+- `SYS-6` Scheduled report emails + custom date ranges (ties §20).
+
+**Nice-to-have**
+- `SYS-7` Walk-around video inspection (short clip at intake) — modern trust signal (extends D1).
+- `SYS-8` In-app changelog / "what's new" so shops discover features without a sales touch (ties Theme I hints).
+
+**Journey gaps**
+- `SYS-J1` Notification a customer truly can't receive (bad number, no Messenger) — detect + fall back to a call task for the advisor.
+- `SYS-J2` Concurrent edit — two staff edit the same WO at once (last-write-wins vs lock vs merge).
+- `SYS-J3` Partial outage — gateway down (SMS/Messenger) — queue + retry + visible "delivery delayed" rather than silent loss (ties L2/P8).
 
 ---
 
