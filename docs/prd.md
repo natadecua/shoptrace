@@ -507,6 +507,7 @@ These are **not** in the MVP schema, but the core tables should leave clean seam
 | Future entity | Backlog home | Seam to preserve in MVP |
 |---------------|--------------|--------------------------|
 | `Bay` / `BayAssignment` | Theme B | Optional `bay_id` on `WorkOrder`; bay history is a derived view |
+| `Bay` geometry (`x`/`y`/`rotation`/`row`) + capability (`services[]`/`vehicle_types[]`/`equipment`/`capacity`) + `BayGroup`/`Zone` + `BayLayout` | Theme B (B5/B6) | All nullable; the logical bay model works without the spatial planner |
 | Extended `Reminder` (date/mileage basis, types: PMS/checkin/milestone/thankyou) | Theme C, G | `Reminder` already exists (§11.1) — extend, don't replace |
 | `Survey` (CSAT) | Theme C2, H2 | Linked to `WorkOrder` + `Customer` |
 | `Campaign` / `CampaignRecipient` | Theme C3, G10 | Audience filters read existing `Customer`/`WorkOrder`; opens via `EventLog` |

@@ -47,11 +47,13 @@ Visual car representations and a "collection/library" the shop builds up per car
 
 ---
 
-## Theme B — Visual Bay & Car Status (Queue Board UX) 🔎
+## Theme B — Visual Bay, Car Status & Layout Planner (Queue Board UX) 🔎
 
-**Vision.** Make the admin queue board feel like a live shop floor: cars and bays reflect their current job status visually, progress within a bay is obvious at a glance, and transitions between bays feel intentional and trackable — not just a status tag on a card.
+**Vision.** Make the admin queue board feel like a live shop floor: cars and bays reflect their current job status visually, progress within a bay is obvious at a glance, and transitions between bays feel intentional and trackable — not just a status tag on a card. At the rich end, an owner can lay out their actual shop floor and watch cars flow through it.
 
-**Priority:** P2 — post-MVP queue UX enrichment. Requires the core queue loop to be stable and at least one real shop's bay layout as reference. Builds on the queue board (Brief 1 / §9) and the car silhouettes from A5.
+**Priority:** the **logical bay model** (which bay, status, capability) is **P2**; the **spatial layout planner (B5)** and **animated floor (B7)** are **P3 delight — KISS-gated and strictly optional** (see the logical-vs-spatial principle below). Builds on the queue board (Brief 1 / §9) and the car silhouettes from A5.
+
+> **Cross-checked against an external (ChatGPT) bay-planner feature list, 2026-06-04.** ~70% already lived here (B1–B4, A5 silhouettes, §12.7 checklists, A1 vehicle-matching, §33 onboarding). The net-new it contributed — a Sims-style **layout planner**, a richer **operational floor viz**, and **per-bay service/vehicle capability** — is folded in as B5–B7 below, with KISS phasing and the privacy line preserved.
 
 ### B1 — Bay map & occupancy display (strongest) 🔎
 A visual representation of the shop's bays — slots on a floor plan or a simple lane grid — each showing which car is currently in it and at what job status.
@@ -79,11 +81,31 @@ The generic car silhouette (from A5) color-shifts to match job status — e.g., 
 - **KISS:** CSS fill on an inline SVG silhouette, swapped by status class. One silhouette set per body type; color is the only variant. No per-model art.
 - **Caveat:** color alone is not accessible — pair with a status badge or icon for contrast.
 
+### B5 — Bay layout planner (Sims-style spatial editor) — ⚠️ KISS-gated, P3
+A top-down / isometric-lite editor where the owner arranges their real shop floor: drag bay modules from a left tray onto a snap-grid; move / rotate / duplicate / delete / multi-select; **group into colored zones** (Repair / Paint / Wash & Detail / Diagnostics / Ungrouped) with editable names + colors; 1-row / 2-row toggle; undo/redo, zoom, side inspector, floating selection toolbar. White background, subtle grid, **soft rounded modules sitting directly on the grid** (no floor tiles/borders), generic rounded cars.
+- **Bay module types** (from the source list): two-post lift · four-post lift · no-lift · paint booth · detailing pad · diagnostics · wash · tire · alignment · EV · custom.
+- **⚠️ Not MVP, and not early P2.** This is essentially a mini design tool — building it first burns the simplicity budget the spine needs. **Onboarding MVP needs only a bay *count* + name/type list, fully skippable ("add later")** — which the source list itself supports (Skip for now / Add later). The spatial editor is a **credibility/delight layer (P3)**.
+- **Backend:** extends `Bay` with geometry (`x`, `y`, `rotation`, `row`); new `BayGroup`/`Zone` (name, color); `BayLayout` per shop (grid config). **All nullable** — a shop that never opens the planner still has a fully working logical bay model.
+
+### B6 — Per-bay service & vehicle-type capability 🔎 (P2)
+Each bay declares which **services** it supports and which **vehicle types** it fits, so jobs route/validate to the right bay; per-bay equipment, capacity, active/inactive.
+- **Backend:** `Bay.services[]` (→ `ServiceCatalogItem`), `Bay.vehicle_types[]`, `equipment`, `capacity`, `active`. Reuses **A1** (car-type applicability) + the service catalog (§15.7); **vehicle-type matching + generic fallback = our A5 silhouettes** (swappable, fallback-to-generic when no exact match). Checklists-per-service / per-vehicle = §12.7 + A1 (the source's SOP builder is our existing template system).
+
+### B7 — Operational queue visualization (live shop floor) 🔎 (P2 logical / P3 animated)
+The "live shop" view: a queue lane with an approach ramp + **gate/barrier**, waiting cars lined up behind it, a **"Next Up"** car past the gate, cars driving forward into active bays; bay occupancy (on-lift, wash, paint, diagnostics); a **shop-overview panel** (bay-status counts, utilization %, group legend). Status labels: In Bay · Waiting · Next Up · Available · Repair · Paint · Wash & Detail.
+- **Builds on B1–B4** and ties capacity (Theme N). The **logical** version (which bay, status, counts, utilization) is the P2 win; the **animated spatial** version (drive-forward, ramp, gate) is P3 polish on top.
+
+> **Principle — logical model vs spatial layout (decide once).** Separate **(a) the logical bay model** — which bay a job is in, its status + capability (needed for ops; cheap; P2) — from **(b) the spatial layout** — x/y/rotation/zones for the isometric view (additive delight; P3). Build (a) first; (b) is a visual layer on top that must **never block core flow**. A shop that ignores the planner still gets a working lane/list board.
+
+> **Privacy reaffirm (roadmap C9).** Spatial bay occupancy — *where a specific car physically sits* — is **staff-only**. The customer portal, lounge display (Theme O), and public queue show **status without location**. The operational floor viz never leaks "the where."
+
 ### Theme B — open questions
 - Does the shop configure its own bay layout (number + type), or does ShopTrace provide a fixed default? (Recommend: configurable, seeded with a sensible default at onboarding.)
 - Is bay assignment mandatory (every WO must be in a bay) or optional (bays are a richer feature some shops use, some don't)? (Recommend: optional — feature-toggle, absence degrades gracefully to current card-based queue.)
 - Does the mechanic app show the bay map too, or is it strictly the advisor's view?
 - How do multi-lift bays work? (Two cars on the same lift is physically impossible; one lift = one bay slot.)
+- **Onboarding weight:** keep bay setup **skippable** (MVP = bay count; planner = later), matching the source's Skip/Add-later — don't let a layout editor gate "first work order."
+- **Art-direction reconciliation:** the source's soft "premium-SaaS / Sims" look vs the distinctive automotive/forensic language in `visual-identity-brief.md` — is the soft look for the **planner surface only** (reasonable — it's a spatial tool), or the **whole product**? Open decision (see chat).
 
 ---
 
