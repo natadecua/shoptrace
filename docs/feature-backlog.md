@@ -591,6 +591,42 @@ When the lounge is empty or to fill space: shop branding, today's promos, the wo
 
 ---
 
+## Theme P — Diagnosis Trust & Transparency (the drop-off trust problem) 🔎  ⭐
+
+**Vision.** The deepest fear in auto repair — in PH especially — is *"niloloko ako: gumagawa sila ng sira para may palitan."* (the mechanic invents work / over-recommends parts to upsell). This is **the** problem ShopTrace exists to solve. Win the **found-issue / recommend-replacement moment** with *proof rituals + human accountability*, and use AI **only to amplify that transparency — never to sit in judgment of the mechanic, never to gate the flow.**
+
+**Priority:** the proof rituals (PT1–PT6) are **high-value, P2/P3**, mostly already seeded (Issue capture §12.8 / Brief 5, D1 inspection, D3 staff, Brief 7 approvals). The AI augmentations (PT7–PT11) are **P3, opt-in, guardrailed.** *(Items use `PT#` to avoid clashing with process-gap `P#`.)*
+
+### The proof rituals (no AI needed — cheaper, more reliable, on-thesis)
+- **PT1 — Show, don't tell.** A recommendation isn't valid without a photo/short video of the *actual* part on *this* car (plate/context in frame), in situ, before/after. Extends `Issue` (§12.8) + Brief 5. This alone defeats most distrust.
+- **PT2 — Return/show the old part ("balik ang lumang piyesa").** Log *old part offered/returned* + a photo of the removed part. A powerful, culturally-rooted PH trust ritual — digitize and reinforce it.
+- **PT3 — Measurement vs spec (objective, not opinion).** Capture the number against the standard: pad 2mm vs 3mm threshold, tread vs 1.6mm legal limit, battery voltage, DTC code. Objective anchors beat "trust me."
+- **PT4 — Standardized inspection (no cherry-picking).** A consistent multi-point inspection (ties D1) so findings look *systematic*, not invented per customer — "we check these points every time."
+- **PT5 — History trend on findings.** "Last visit pads 5mm → now 3mm." The car's own history makes a recommendation credible and non-arbitrary.
+- **PT6 — Named mechanic + safe, easy decline.** Staff profile (D3) on the finding; declining is one tap and non-pushy (Brief 7), with "ask a question" / second-opinion. Trust grows when *declining is easy*.
+
+### AI — the careful part
+> **Hard rule (the answer to "AI fact-checker?"): NO AI judge, NO AI gate.** Do **not** build an AI that tells the customer whether the mechanic is right/wrong, or that must approve a finding before it proceeds. Why it's complex *and* risky:
+> 1. **Liability** — a wrong AI "confirm" (says a bad brake is fine) is a safety/legal exposure; a wrong AI "reject" undermines a correct mechanic and creates disputes.
+> 2. **A photo can't actually verify reality** — internal wear, intermittent electrical faults, noises, drivability symptoms aren't visible; vision models give *false confidence* / hallucinate.
+> 3. **Adversarial + gameable** — an AI gatekeeper makes mechanics (our **highest reversion risk**, KISS) photograph to satisfy a bot, not the customer; they'll resent being graded by a machine.
+> 4. **Off-thesis** — we build trust through *human accountability + proof*, not "trust the robot over your mechanic."
+
+**Safe AI uses (all P3, optional, advisor/owner-reviewed, never authoritative, never blocking):**
+- **PT7 — Customer explainer (translation, not judgment).** Turn the mechanic's terse finding + photo into plain Taglish the customer understands ("manipis na ang brake pad ninyo, 2mm na lang"). It *explains the shop's finding*, never contradicts it; advisor reviews before send.
+- **PT8 — Mechanic evidence-coach (private, pre-customer).** Nudge the *evidence*, not the *diagnosis*: "marked urgent but no photo / no recommended action — add one?" Improves proof quality; not a truth oracle; not a hard gate.
+- **PT9 — Owner anomaly signal (audit, not customer).** Pattern-level, **owner-only**, morale-sensitive (like M4): "mechanic X recommends part Y at 3× shop average → review." Never customer-facing, never blocks a job; framed as coaching.
+- **PT10 — Reference anchoring.** Surface a *general* service interval/standard to contextualize a finding ("typical replacement ~X km / Y mm"). Sourced facts, not AI opinion. ⚠️ Respect the OEM IP caveat (A4) — general specs only, never pooled copyrighted manuals.
+- **PT11 — Diagnosis aid for the mechanic (decision support).** From symptoms/DTCs, AI *suggests* likely causes to help (esp. junior) mechanics. Human decides; never shown to the customer as "the AI agrees."
+
+### Theme P — open questions
+- Does PT2 (return old part) need a customer acknowledgment ("old part returned/declined")? (Lean: yes, one tap, audited.)
+- PT7 customer explainer: always advisor-reviewed before send, or auto-send for low-severity? (Lean: always reviewed at first; the trust cost of a bad auto-explanation is high.)
+- PT9 anomaly signal: surface to the mechanic themselves (self-correct) or strictly owner-only? (Lean: owner-only first.)
+- **Backend notes:** `Issue` gains measurement fields (`value`, `unit`, `threshold`, `dtc_code`) + `old_part_returned` flag + removed-part photo; AI outputs are stored as **editable drafts/suggestions**, flagged AI-generated, never as the authoritative finding.
+
+---
+
 ## Persona Refinements & Journey Gaps 🔎
 
 **Purpose.** A finer-grained sweep than the themes above — per persona, split into **Major** (real capability), **Polish** (small UX win on an existing feature), **Nice-to-have** (delight add-on), and **Journey gaps** (a step in a real flow we don't yet handle). Most are P2/P3. Codes are referenceable (e.g. `MEC-J2`).
