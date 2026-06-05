@@ -636,6 +636,66 @@ When the lounge is empty or to fill space: shop branding, today's promos, the wo
 
 ---
 
+## Theme Q — Profitability & Cost Intelligence (owner) 🔎  ⭐ (the missing half of the money)
+
+**Vision.** We track revenue, payments, and receivables — but **never cost**. So an owner can see *how much they billed* but not *how much they kept*. Adding the cost side (parts cost, labor cost, sublet cost) unlocks **margin per job / service / mechanic / period** — the single biggest owner-insight upgrade after basic reports. "Which services actually make me money?" is a question paper never answered.
+
+**Priority:** P2/P3 — high owner value, but cost entry adds data-entry burden → **KISS-gated: optional, low-friction, never blocks billing.**
+
+- **Q1 — Cost capture (optional).** Parts cost vs sell price, labor cost basis, sublet cost on line items. **Defaults derived** where possible: parts cost from catalog/inventory (F1), labor cost from rate/commission (M). The shop that ignores it still bills fine; the shop that fills it gets profitability.
+- **Q2 — Job profitability.** revenue − costs = margin per WO; flag low/negative-margin jobs.
+- **Q3 — Margin analytics.** By service type, mechanic, period, customer/fleet — "your most/least profitable services."
+- **Q4 — Light expense tracking (optional).** Overhead (rent, utilities, supplies) → a rough net/P&L-lite view. ⚠️ **A management view, not accounting** — "not your books, not BIR"; keeps the §16.7 posture.
+- **Backend:** `LineItem.cost`; default cost on `ServiceCatalogItem`/`InventoryItem`; margin derived (not stored); optional `Expense` entity. **Owner-only.**
+
+---
+
+## Theme R — Prepaid Packages, Vouchers & Maintenance Plans 🔎
+
+**Vision.** PH shops sell **packages** ("3 oil changes," "PMS package"), **gift certificates**, and could offer **maintenance plans** (prepaid annual PMS). Prepaid balance + redemption drives upfront cash, loyalty, and retention.
+
+**Priority:** P3 — ties loyalty (G5), commercialization (J), reminders (C).
+
+- **R1 — Prepaid service packages.** Buy N services upfront; redeem over time; track remaining balance.
+- **R2 — Gift certificates / vouchers / promo codes.** Issue, redeem, track, expire.
+- **R3 — Customer maintenance plans.** Recurring prepaid PMS schedule + auto-reminders (C1). *(Note: this is the shop's **customer** paying the **shop** — distinct from ShopTrace's SaaS subscription in Theme J.)*
+- **Backend:** `Package`/`Voucher` (type, credits/value, balance, expiry) + `Redemption` (against a WO); `PromoCode`; reuses `Deposit`/`Payment` + loyalty.
+- ⚠️ **BIR posture:** prepaid = **deferred income**; ShopTrace still issues **no OR** (statement only) — the shop handles the OR externally (§16.7, P48).
+
+---
+
+## Theme S — Trust, Safety & Abuse Resistance 🔎  ⭐
+
+**Vision.** A public-facing trust product invites abuse — spam inquiries, portal-link abuse, fake reviews, account takeover, problem customers. Protect shops *and* the platform **without adding friction for honest users** (the protections should be invisible to them).
+
+**Priority:** **P2** for launch-critical bits (inquiry spam, portal token abuse, account recovery); P3 for the rest.
+
+- **S1 — Inquiry/booking spam & rate limiting.** Public forms attract bots → captcha-lite, rate limit, dedupe, flag, so Pending Intake doesn't flood.
+- **S2 — Portal link/PIN abuse.** Link sharing + PIN brute-force → rate limit, optional PIN, token expiry/revocation (ties P15/P18).
+- **S3 — Account recovery & session safety.** Password reset, suspicious-login alert, device/session management, 2FA enforcement for money roles (extends §27.6 auth).
+- **S4 — Review/content integrity.** Reviews tied to **real released jobs only** (job-linked CSAT, C2/H2) → structurally hard to fake; moderation for abusive text; shop reply.
+- **S5 — Problem-customer flags (internal, sensitive).** No-show / non-payment / abusive flags (ties N3). **Strictly internal, fair, never public, DPA-careful.**
+- **S6 — Customer-supplied media safety.** Basic validation/moderation before customer media reaches staff/portal (ties P49).
+- **Backend:** rate-limit/abuse tables, login audit (→ `AuditLog`), review↔job linkage (exists), `CustomerFlag` (internal).
+
+---
+
+## Frontier Refinements (mining pass, 2026-06-04) 🔎
+
+Smaller but genuinely new — coded `FR#`. Most P2/P3.
+
+- **FR1 — Viber as a first-class channel.** Viber *dominates* PH messaging; we only scoped SMS + Messenger. Add it to the channel engine (Layer 2) — likely higher notification adoption than Messenger. Needs Viber Business API; session/bot rules differ. **High PH relevance.**
+- **FR2 — Hardware peripherals.** Thermal **receipt/job-order printer** (front desks already have these), **label/QR printer** (claim tickets O, lube stickers E4, parts labels), **barcode scanner** (inventory F1), **OBD reader** (DTC import → `Issue`, ties PT3). Web USB/Bluetooth or print-CSS. Removes real friction.
+- **FR3 — Supplier-side warranty claims.** Distinct from customer warranty (C4): when a *shop-installed* part fails, file an RMA against the **supplier** (status, credit). Ties L (parts).
+- **FR4 — Customer proof & data export/ownership.** Let customers download their proof photos + history (they own it). Trust + DPA portability; extends D5/SYS-3. Small build, strong trust signal.
+- **FR5 — Seasonal/surge capacity (PH calendar).** Undas, Holy Week, Christmas, long weekends → demand surges. Surge planning + "book early" nudges + temporary hours/capacity. Extends N.
+- **FR6 — Low-tech-literacy / ultra-simple mode.** The older mechanic/customer who distrusts tech: stripped, large-target, minimal-text, icon + Taglish + voice mode. **KISS-critical for adoption among non-tech staff** — directly serves the reversion-risk problem.
+- **FR7 — Recurring / contract scheduled maintenance.** Auto-generate WOs/reminders on a schedule for fleets (F2) and retail plans (R3). Extends N/C.
+- **FR8 — AI inquiry triage (optional).** Auto-categorize/route Pending Intake (service type, urgency, spam) to speed advisor triage; human-reviewed. Ties S1 + channel.
+- **FR9 — Owner plain-language report summary (optional AI).** "This month in one paragraph" from the numbers (F3/OWN-5). Glanceable; never the source of truth.
+
+---
+
 ## Persona Refinements & Journey Gaps 🔎
 
 **Purpose.** A finer-grained sweep than the themes above — per persona, split into **Major** (real capability), **Polish** (small UX win on an existing feature), **Nice-to-have** (delight add-on), and **Journey gaps** (a step in a real flow we don't yet handle). Most are P2/P3. Codes are referenceable (e.g. `MEC-J2`).

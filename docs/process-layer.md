@@ -64,6 +64,7 @@ The single most important UI-independent system: getting the right message to th
 - **P8 — Failure fallback.** SMS hard-fail → auto-fallback to Messenger/portal, or just flag the advisor? *Recommend: flag advisor for transactional (human ensures the car-is-ready message lands); silent drop + log for marketing.*
 - **P9 — Inbound identity collision.** Two customers share a phone (family car), or a number changed owners. How does inbound matching disambiguate? Needs a confidence threshold + manual-attach fallback.
 - **P10 — Transactional opt-out floor.** Can a customer opt out of *everything* including "your car is ready"? *Recommend: no — transactional is part of the service; only marketing is opt-out-able, stated at intake consent.*
+- **P47 — Inbound identity across channels (SMS + Messenger + Viber).** With three channels (incl. Viber, FR1), matching inbound to a thread/customer is harder — a customer may use a different number on Viber than the WO phone. Extends P9 with a cross-channel match-confidence + manual-attach fallback.
 
 ---
 
@@ -131,6 +132,7 @@ Billing math and payment workflow — must be exact and BIR-posture-correct (§1
 - **P23 — Price-list versioning.** When `ServiceCatalogItem` prices change, historical bills must keep the price charged at the time. Snapshot line prices onto the WO (don't reference live catalog). Confirm.
 - **P40 — Estimate validity / expiry.** Quotes go stale (parts prices move). An estimate should carry a validity window; past it, a re-quote is required before approval. Define default validity (per-tenant) + the re-quote flow. Ties Theme L (parts sourcing) and Theme K3 (insurance supplementals).
 - **P41 — Deposit / downpayment policy.** When is a downpayment required (parts order, big-ticket job, BYO-parts labor)? Define trigger rules + amount basis (% of estimate / fixed) so deposits aren't ad-hoc. Reuses `Deposit` (§11.1).
+- **P48 — Prepaid / deferred-income posture.** Prepaid packages/plans (Theme R) take money *before* service. Treat as **deferred income**; ShopTrace still issues **no OR** (statement only) — the shop handles the OR externally. Keeps the §16.7 BIR posture.
 
 ---
 
@@ -169,6 +171,9 @@ Upload, derivatives, offline sync, proof authenticity. (§12.12, §24, §27.2.)
 - **P29 — Storage quota.** Per-tenant storage budget + lifecycle (move old full-res to cold storage, keep derivatives hot)? Cost control at scale.
 - **P30 — Video handling.** Customer-supplied video + issue clips — size cap, allowed length, transcoding/compression. Define limits or video balloons cost and breaks weak-WiFi upload.
 - **P31 — Photo retention.** Keep proof forever (it's the product's promise) vs tiered/cold after N years. Tie to P29 + retention policy.
+- **P45 — Brownout / power resilience (PH).** Frequent outages take down the front-desk desktop, lounge TV, and Wi-Fi. The mechanic PWA is already offline-capable; the *advisor* flow assumes power+net. Need a degraded-operation story (mobile-hotspot fallback, brownout-safe sync, graceful reconnect). **Open.**
+- **P46 — Advisor/desktop offline scope.** Offline was scoped to mechanic photos/checklist only (§27.2). Decide the minimal advisor offline surface during an outage — at least *view today's jobs* + *capture intake to sync later*.
+- **P49 — Customer-supplied media safety.** Inbound customer media (booking/messages) could be inappropriate or malformed. Validate (type/size) + **staff-review before it reaches the portal** (ties Theme S6).
 
 ---
 
@@ -262,3 +267,8 @@ Outbound contracts — already specced; noted here as a layer so the engine view
 | P42 | Access | Shared-device mechanic attribution | Fast switch + per-job PIN binds to real mechanic |
 | P43 | Lifecycle | Estimate→final variance guard | Re-approval gate over tolerance % |
 | P44 | Access | Non-portal approval legality | Define valid approval per channel |
+| P45 | Resilience | Brownout / power resilience (PH) | Degraded mode + hotspot fallback — **open** |
+| P46 | Resilience | Advisor/desktop offline scope | At least view-today + capture-intake-to-sync |
+| P47 | Channel | Inbound identity across SMS+Messenger+Viber | Extends P9; cross-channel match confidence |
+| P48 | Money | Prepaid/deferred-income posture | Deferred income; statement not OR (§16.7) |
+| P49 | Media | Customer-supplied media safety | Validate + staff-review before portal |

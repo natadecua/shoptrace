@@ -510,6 +510,10 @@ These are **not** in the MVP schema, but the core tables should leave clean seam
 | `Bay` geometry (`x`/`y`/`rotation`/`row`) + capability (`services[]`/`vehicle_types[]`/`equipment`/`capacity`) + `BayGroup`/`Zone` + `BayLayout` | Theme B (B5/B6) | All nullable; the logical bay model works without the spatial planner |
 | `Issue` measurement fields (`value`/`unit`/`threshold`/`dtc_code`) + `old_part_returned` + removed-part photo; AI outputs stored as editable drafts | Theme P | Proof-first findings; AI is never the authoritative finding, never a gate |
 | `ReferenceStandard` (curated specs/intervals/limits + per-shop overrides) + anomaly aggregates (owner-only) | Theme P (PT9/PT10) | Sourced facts only (no AI-invented specs, no pooled OEM manuals); anomaly off `Issue`/`EventLog` |
+| `LineItem.cost` + default cost on catalog/inventory + optional `Expense` | Theme Q | Margin derived (not stored); owner-only; management view, not BIR accounting |
+| `Package` / `Voucher` / `Redemption` / `PromoCode` | Theme R | Prepaid = deferred income; statement not OR (P48); reuses Deposit/Payment + loyalty |
+| `CustomerFlag` (internal) + rate-limit/abuse tables + login audit | Theme S | Strictly internal/owner; protections invisible to honest users; reviews stay job-linked |
+| `SupplierWarrantyClaim` (RMA) | FR3 | Shop↔supplier; distinct from customer warranty (C4) |
 | Extended `Reminder` (date/mileage basis, types: PMS/checkin/milestone/thankyou) | Theme C, G | `Reminder` already exists (§11.1) — extend, don't replace |
 | `Survey` (CSAT) | Theme C2, H2 | Linked to `WorkOrder` + `Customer` |
 | `Campaign` / `CampaignRecipient` | Theme C3, G10 | Audience filters read existing `Customer`/`WorkOrder`; opens via `EventLog` |
