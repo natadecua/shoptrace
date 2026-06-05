@@ -509,6 +509,7 @@ These are **not** in the MVP schema, but the core tables should leave clean seam
 | `Bay` / `BayAssignment` | Theme B | Optional `bay_id` on `WorkOrder`; bay history is a derived view |
 | `Bay` geometry (`x`/`y`/`rotation`/`row`) + capability (`services[]`/`vehicle_types[]`/`equipment`/`capacity`) + `BayGroup`/`Zone` + `BayLayout` | Theme B (B5/B6) | All nullable; the logical bay model works without the spatial planner |
 | `Issue` measurement fields (`value`/`unit`/`threshold`/`dtc_code`) + `old_part_returned` + removed-part photo; AI outputs stored as editable drafts | Theme P | Proof-first findings; AI is never the authoritative finding, never a gate |
+| `ReferenceStandard` (curated specs/intervals/limits + per-shop overrides) + anomaly aggregates (owner-only) | Theme P (PT9/PT10) | Sourced facts only (no AI-invented specs, no pooled OEM manuals); anomaly off `Issue`/`EventLog` |
 | Extended `Reminder` (date/mileage basis, types: PMS/checkin/milestone/thankyou) | Theme C, G | `Reminder` already exists (§11.1) — extend, don't replace |
 | `Survey` (CSAT) | Theme C2, H2 | Linked to `WorkOrder` + `Customer` |
 | `Campaign` / `CampaignRecipient` | Theme C3, G10 | Audience filters read existing `Customer`/`WorkOrder`; opens via `EventLog` |
