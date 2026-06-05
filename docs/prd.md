@@ -514,6 +514,7 @@ These are **not** in the MVP schema, but the core tables should leave clean seam
 | `Package` / `Voucher` / `Redemption` / `PromoCode` | Theme R | Prepaid = deferred income; statement not OR (P48); reuses Deposit/Payment + loyalty |
 | `CustomerFlag` (internal) + rate-limit/abuse tables + login audit | Theme S | Strictly internal/owner; protections invisible to honest users; reviews stay job-linked |
 | `SupplierWarrantyClaim` (RMA) | FR3 | Shop↔supplier; distinct from customer warranty (C4) |
+| `ShopArchetype` / `WorkflowStage` + `WorkOrder.progress_mode` + timer fields (`service_started_at`/`est_duration_min`) | Theme T | Dialable workflow depth (checklist/timer/stage); generalizes Theme I + bay types |
 | Extended `Reminder` (date/mileage basis, types: PMS/checkin/milestone/thankyou) | Theme C, G | `Reminder` already exists (§11.1) — extend, don't replace |
 | `Survey` (CSAT) | Theme C2, H2 | Linked to `WorkOrder` + `Customer` |
 | `Campaign` / `CampaignRecipient` | Theme C3, G10 | Audience filters read existing `Customer`/`WorkOrder`; opens via `EventLog` |

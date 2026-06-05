@@ -69,6 +69,8 @@ Themes are *enrichments by design* — none is MVP wholesale. Phasing assumes th
 | **M** Labor & commission (porsiyento) | **P3** | High owner value but config-heavy; morale-sensitive. |
 | **K** Insurance & LOA | **Parked / deferred** | Money-sensitive, posture-bound, high flow-divergence. Keep the `payer_type` *seam* now; build later. |
 
+> **Note (post-snapshot):** Themes **P–T** and frontier refinements **FR1–FR9** were added to `feature-backlog.md` after this consolidation. Quick phasing: **P** (diagnosis trust) P2/P3 · **Q** (profitability) P2/P3 · **R** (packages) P3 · **S** (trust/safety) P2 launch-critical bits · **T** (shop archetypes / car wash) P2 *seam*, build post-pilot. Fold fully at the next consolidation. **T is architecturally notable** — it generalizes Theme I; leave the `progress_mode` + archetype seam now (cheap), like `tenant_id`.
+
 ---
 
 ## 3. Process-gap triage (P1–P44)

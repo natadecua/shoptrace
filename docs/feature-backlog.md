@@ -680,6 +680,43 @@ When the lounge is empty or to fill space: shop branding, today's promos, the wo
 
 ---
 
+## Theme T — Shop Archetypes & Dialable Workflow (vehicle-service horizontal) 🔎  ⭐
+
+**Vision.** The core ShopTrace loop — *intake → live status → ready → notify, with a public queue + ETA* — isn't specific to repair. It fits **every vehicle-service business**: car wash, detailing, quick-lube, tire/vulcanizing, aircon, motorcycle. Auto **repair is the deepest** workflow (checklists, photos, approvals, billing); a **car wash is the shallowest** (queue → washing-timer → ready). Make workflow depth **dialable** and one platform serves them all — a major TAM/wedge expansion **without a second product.**
+
+**Priority:** P2 to *decide the seam*; build per-archetype post-pilot. **Strategically important and KISS-perfect at the simple end.** This is a **generalization of Theme I (progressive disclosure) + Theme B bay types** — a car wash is mostly ShopTrace with everything toggled off and a timer for progress. Strong reuse, not a new build.
+
+### New primitive — progress mode (the key mechanic)
+Today "progress" = checklist completion + photo gate. Generalize to a **`progress_mode`** per service/work order:
+- **checklist-driven** — repair (existing): progress = required steps/photos done.
+- **timer/duration-driven** — wash, quick-lube: start → `est_duration` countdown → done. *("just a timer once the car starts getting washed.")*
+- **stage-driven** — detailing: manual advance through named stages (wash → clay → polish → wax → ready).
+
+### T1 — Shop archetype presets
+At onboarding, pick an archetype → preconfigures toggles, default stages, progress mode, bay types, seed services. Skippable/editable (KISS, §33).
+- **Backend:** `ShopArchetype` (key, preset feature-toggle set, default `WorkflowStage[]`, default `progress_mode`); reuses `FeatureState` (Theme I) + bay types (Theme B).
+
+### T2 — Car wash archetype (simplest, concrete)
+Stages: **queued → washing → (drying) → ready**. **Timer-driven** progress (per-service typical duration). Checklists/approvals/required-photos **off** (before/after optional). Billing light or none (pay at counter). The hero is the **live queue + ETA** ("3 cars ahead, ~25 min") and "your car is being washed — ~8 min left" → "ready."
+- Wash customers wait **on-site** → the public queue (Theme N) and **lounge display (Theme O)** are *more* central here than in repair.
+- ⚠️ **Timer honesty:** the countdown is an *estimate* (may finish early/late) — same honest framing as the wait band (N5), never a false promise.
+
+### T3 — Composable archetypes in one shop
+Many shops do **both** (wash + repair, or wash + detailing). Archetypes must **compose, not exclude** — a repair bay and a wash lane run different workflows under one tenant. Ties bay types/zones (Theme B — a wash bay already exists).
+
+### Strategy & KISS guardrails
+- **One dialable platform, NOT a fork.** Same codebase + archetype config — never a separate "car wash app." Forking splits effort and kills the platform thesis.
+- **Pilot one archetype first.** Nail full repair (AutoLounge) before chasing wash — but **leave the seam now** (`progress_mode` + archetype config), mirroring the `tenant_id`-from-day-one discipline. Cheap now, costly to retrofit.
+- **Stay within vehicle services.** Wash / detail / lube / tire / aircon / moto / repair — yes. Generic queue management for clinics/restaurants — **no** (different domain, dilutes focus).
+- **A "Lite" tier (Theme J)** fits the wash/simple end naturally — cheaper, simpler, faster to sell.
+
+### Theme T — open questions
+- **Beachhead (strategic):** car wash is *simpler, more numerous, faster to sell* than full repair — an earlier wedge *alongside* the repair pilot, or strictly later? Genuine fork (pilot evidence + appetite).
+- Per-service vs per-shop progress mode — likely **per-service** (a wash+repair shop has both).
+- How much archetype editing before it's just "custom"? Keep presets opinionated, allow override.
+
+---
+
 ## Frontier Refinements (mining pass, 2026-06-04) 🔎
 
 Smaller but genuinely new — coded `FR#`. Most P2/P3.
