@@ -2,7 +2,7 @@
 
 **What this is.** The single authoritative resolution of every decision that must be settled **before** the schema is written (roadmap §6, which pulls in the §3 "decide before schema" gating gaps and the §5 contradictions). Each item has a **recommended default marked DECIDED**; the handful that are genuine owner judgment calls are flagged **⚑ CONFIRM**. These are mostly cheap columns/enums and one-time definitions — but each is a painful migration if discovered late, so they gate the schema.
 
-**Status:** Draft for owner confirmation · Date: 2026-06-08 · Branch: `claude/autolounge-service-hub-prd-Eccmn`
+**Status:** ✅ LOCKED (owner-confirmed 2026-06-08) · Branch: `claude/autolounge-service-hub-prd-Eccmn`
 **Aligns to:** PRD §11 (data model), §27 (multi-tenancy/RLS), §16.7 (BIR). Naming follows the PRD exactly.
 
 ---
@@ -18,24 +18,24 @@
 | B4 | `payer_type` seam (K, C8) | ✅ DECIDED | enum on `work_order` |
 | B5 | Customer ↔ vehicle ownership (D5) | ✅ DECIDED | `vehicle_ownership` join |
 | B6 | Share/claim tokens (O, C4) | ✅ DECIDED | `share_grant` + `claim_code` |
-| C1 | Money type & precision | ⚑ CONFIRM | integer centavos |
-| C2 | Rounding rule (P19) | ⚑ CONFIRM | per-shop setting, default off |
+| C1 | Money type & precision | ✅ DECIDED | integer centavos |
+| C2 | Rounding rule (P19) | ✅ DECIDED | per-shop setting, default off |
 | C3 | Price snapshot on bill (P23) | ✅ DECIDED | denormalized line columns |
 | C4 | Estimate lifecycle states (P1/P2/P43) | ✅ DECIDED | enum + variance flag |
-| C5 | Estimate variance re-approval threshold | ⚑ CONFIRM | >15% **and** >₱500 |
-| C6 | Estimate expiry (P40) | ⚑ CONFIRM | 7 days |
+| C5 | Estimate variance re-approval threshold | ✅ DECIDED | >15% **and** >₱500 |
+| C6 | Estimate expiry (P40) | ✅ DECIDED | 7 days |
 | C7 | Cancellation states (P4) | ✅ DECIDED | status enum + reason |
 | C8 | Partial payment / utang | ✅ DECIDED | `payment` rows + balance |
 | C9 | BIR posture (§16.7) | ✅ DECIDED | `manual_or_ref`, no OR issuance |
 | D1 | Portal token policy (P15) | ✅ DECIDED | `share_grant` token |
-| D2 | PIN on money actions | ⚑ CONFIRM | yes, last-4 phone |
+| D2 | PIN on money actions | ✅ DECIDED | customer-set `customer.portal_pin_hash` |
 | D3 | Staff auth & solo-role (OWN-J1) | ✅ DECIDED | roles = permission sets |
 | E1 | Metric definitions (P32) | ✅ DECIDED | defined below |
 | E2 | Event taxonomy (P34) | ✅ DECIDED | `domain.verb` snake_case |
 | E3 | Audit coverage (P35) | ✅ DECIDED | `audit_event` append-only |
 | E4 | Photo tamper-evidence (P28) | ✅ DECIDED | server `captured_at` + hash |
 | F1 | DPA erasure (P26) | ✅ DECIDED | anonymize, keep record |
-| F2 | Retention windows (P27) | ⚑ CONFIRM | defaults below |
+| F2 | Retention windows (P27) | ✅ DECIDED | defaults below |
 | F3 | Backup + tested restore (G37) | ✅ DECIDED | **launch blocker** |
 | G1 | Tenant "today" boundary (P12) | ✅ DECIDED | `timezone`, default Asia/Manila |
 | G2 | Progress mode seam (Theme T) | ✅ DECIDED | `progress_mode` enum |
@@ -96,7 +96,12 @@ The **found-issue approval loop is MVP/Basic spine**, in every tier. The reusabl
 
 **D1 — Portal token policy (P15) — ✅ DECIDED.** Customer portal uses a **per-WO `share_grant` token** (not a customer login), **revocable**, with an expiry. Tracking **read** = token only. Token validated by a server route that scopes the query explicitly — customer reads never touch Supabase Auth/RLS-by-JWT.
 
-**D2 — PIN on money/approval actions ⚑ CONFIRM.** **Recommend: yes.** Viewing status = token only; **approving an estimate or confirming payment** additionally requires a lightweight PIN = **last 4 digits of the customer's phone on file**. Low friction, materially raises trust on the actions that move money. *Confirm: PIN on approve/pay, or token-only everywhere?*
+**D2 — PIN on money/approval actions — ✅ DECIDED (customer-set, not phone-derived).** Viewing status = token only. **Approving an estimate or confirming payment** additionally requires a **customer-set PIN** — *not* a value derived from the phone number (which would be guessable).
+- **Setup:** on the customer's **first money action** via any portal link, they choose a 4–6 digit PIN. It is stored **hashed** on the `customer` record (`customer.portal_pin_hash`, `portal_pin_set_at`) — never plaintext, never phone-derived.
+- **Reuse:** the same PIN works across all of that customer's future WOs/links (set once, owned by the customer) — no per-visit re-setup.
+- **Recovery:** shop can **reset** the PIN (audited via `audit_event`); a reset clears the hash and forces re-setup on the customer's next money action.
+- **Abuse:** rate-limit attempts, lock out after N failures and escalate to the shop.
+- **Schema seam:** `customer.portal_pin_hash` (nullable), `customer.portal_pin_set_at`. The `share_grant` token still gates *which* WO is visible; the PIN gates *money actions* and is customer-level.
 
 **D3 — Staff auth & solo-role (OWN-J1) — ✅ DECIDED.** Supabase Auth (email+password; 2FA on owner/cashier). `role` ∈ `owner | manager | advisor | mechanic | cashier` is a **permission set, not a seat** — one user can hold several. The most common PH shop is one person = owner+advisor+mechanic; **the app must never force role-switching friction.** `work_order.owned_by` (advisor) is a cheap field (ADV-J1).
 
@@ -144,16 +149,18 @@ The **found-issue approval loop is MVP/Basic spine**, in every tier. The reusabl
 
 ---
 
-## H. The ⚑ CONFIRM shortlist (the only things needing your eye)
+## H. Confirmation log — ALL DECIDED ✅
 
-1. **C1** money = integer centavos — *confirm.*
-2. **C2** rounding — default **off**, optional per-shop round-total-to-peso — *confirm.*
-3. **C5** variance re-approval = **>15% AND >₱500** — *confirm the two numbers.*
-4. **C6** estimate expiry = **7 days** — *confirm.*
-5. **D2** PIN (last-4 phone) on **approve/pay** — *confirm yes/no.*
-6. **F2** retention windows (10y financial · 1y prior-owner PII grace · 90d tokens · 3y media) — *confirm.*
+Owner-confirmed 2026-06-08:
 
-Everything else is a recommended default I'm comfortable building on; say the word and the rest become DECIDED.
+1. **C1** money = integer centavos — ✅ confirmed.
+2. **C2** rounding — default **off**, optional per-shop round-total-to-peso — ✅ confirmed.
+3. **C5** variance re-approval = **>15% AND >₱500** — ✅ confirmed.
+4. **C6** estimate expiry = **7 days** — ✅ confirmed.
+5. **D2** PIN on **approve/pay** — ✅ confirmed, **amended**: customer-**set** PIN (hashed, reusable, shop-resettable), *not* phone-derived.
+6. **F2** retention windows (10y financial · 1y prior-owner PII grace · 90d tokens · 3y media) — ✅ confirmed.
+
+**The sheet is fully locked. No open pre-schema decisions remain.**
 
 ---
 
