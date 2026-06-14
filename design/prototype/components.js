@@ -11,9 +11,9 @@ const C={prog:TL.grep,diag:TL.read,wait:TL.thinking,ready:TL.done,sched:"#8A8E97
 const RED="#E23E66"; // cursor semantic-error, lifted for dark legibility
 const MONO='ui-monospace,"JetBrains Mono",SFMono-Regular,Menlo,monospace';
 const sc=s=>({"In Progress":C.prog,"Diagnostic":C.diag,"Waiting":C.wait,"Ready":C.ready,"Scheduled":C.sched}[s]||C.sched);
-// hairline-only depth — no UI drop shadows (Apple: shadow is reserved for the "product")
+// hairline-only depth, no UI drop shadows (Apple: shadow is reserved for the "product")
 function surf(r=14,extra=""){return `border-radius:${r}px;background:#171A20;border:1px solid rgba(255,255,255,0.08);${extra}`;}
-// the single scarce brand CTA — pill (Uber/Apple action signature)
+// the single scarce brand CTA, pill (Uber/Apple action signature)
 function btnOrange(label,ic,full){return `<button style="display:inline-flex;${full?"width:100%;":""}align-items:center;justify-content:center;gap:7px;border-radius:9999px;padding:0 20px;height:40px;font-size:14px;font-weight:500;color:#fff;background:${ORANGE};border:1px solid ${ORANGE}">${ic?icon(ic,"h-4 w-4"):""}${label}</button>`;}
 function btnGhost(label,ic){return `<button style="display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:8px;padding:0 14px;height:38px;font-size:13px;font-weight:500;color:${INK};background:transparent;border:1px solid rgba(255,255,255,0.16)">${ic?icon(ic,"h-4 w-4"):""}${label}</button>`;}
 function btnTone(label,ic,c,full){return `<button style="display:inline-flex;${full?"width:100%;":""}align-items:center;justify-content:center;gap:6px;border-radius:8px;padding:0 14px;height:38px;font-size:13px;font-weight:500;color:${c};background:transparent;border:1px solid ${c}55">${ic?icon(ic,"h-4 w-4"):""}${label}</button>`;}
@@ -22,11 +22,11 @@ const bays=[
  {id:"01",type:"sedan",plate:"NBC 4521",vehicle:"Toyota Vios",state:"Oil & filter",svc:"oil",status:"In Progress",mech:"Mike R.",elapsed:"22m",booked:"48m",eta:"on time",progress:46},
  {id:"02",type:"pickup",plate:"CAA 8830",vehicle:"Ford F-150",state:"Brake pads",svc:"brake",status:"In Progress",mech:"Alex P.",elapsed:"41m",booked:"1h30",eta:"on time",progress:46},
  {id:"03",type:"compact",plate:"DAB 1190",vehicle:"Honda Civic",state:"Diagnostics",svc:"scan",status:"Diagnostic",mech:"Sarah L.",elapsed:"1h15",booked:"1h00",eta:"+15 late",over:true,waiting:true,progress:100,sel:true},
- {id:"04",type:"suv",plate:"ABX 7742",vehicle:"BMW X5",state:"Final QC",svc:"check",status:"Ready",mech:"Jenny T.",elapsed:"—",booked:"done",eta:"ready",waiting:true,progress:100},
+ {id:"04",type:"suv",plate:"ABX 7742",vehicle:"BMW X5",state:"Final QC",svc:"check",status:"Ready",mech:"Jenny T.",elapsed:"1h05",booked:"done",eta:"ready",waiting:true,progress:100},
  {id:"05",type:"sedan",plate:"TES 0003",vehicle:"Tesla Model 3",state:"Tire rotation",svc:"wrench",status:"In Progress",mech:"Carlo M.",elapsed:"12m",booked:"40m",eta:"on time",progress:30},
  {id:"06",type:"empty"},
 ];
-const insp={bay:"03",plate:"DAB 1190",vehicle:"Honda Civic",phase:"Diagnostic",mech:"Sarah L.",promised:"11:00a",eta:"11:15a",etaDelta:"+15 late",onsite:"3h05",onsiteSub:"since 8:10a",parts:"on hand",cust:"Waiting in lobby",custView:"Viewed 9:42a · no reply",nba:"Update customer",nbaPreview:"Civic is running 15 min behind — new ETA 11:15a.",
+const insp={bay:"03",plate:"DAB 1190",vehicle:"Honda Civic",phase:"Diagnostic",mech:"Sarah L.",promised:"11:00a",eta:"11:15a",etaDelta:"+15 late",onsite:"3h05",onsiteSub:"since 8:10a",parts:"on hand",cust:"Waiting in lobby",custView:"Viewed 9:42a · no reply",nba:"Update customer",nbaPreview:"Civic is running 15 min behind. New ETA 11:15a.",
   stages:["Check-in","Diagnose","Estimate","Approval","Repair","QC","Pickup"],stageIdx:1,
   job:"Engine diagnostics",photos:"2/3",
   steps:[{t:"Visual + fluids check",done:true},{t:"Battery & charging test",done:true},{t:"OBD scan · pull codes",done:true},{t:"Road test",done:false},{t:"Findings + estimate",done:false}],
@@ -60,7 +60,7 @@ function carG(type,job,over){
     s+=bx(o, x0+P.cx+2, 11, z0+P.bh+P.ch, P.cl-4, d-6, P.rh, T,L,R);           // cab roof
     s+=bx(o, x0+P.cx+P.cl, 11, z0+P.bh, P.bl-P.cx-P.cl-4, d-4, 3, "#D9DCE2","#BCC0C8","#9DA2AC"); // bed rail
   }
-  // job badge — flat disc floating over the front, screen-space
+  // job badge, flat disc floating over the front, screen-space
   const sj={oil:"drop",brake:"disc",scan:"pulse",wrench:"wrench",check:"check-circle"}[job];
   if(sj){const bg=over?"#2A1418":"#15171C",bd=over?"#FF7A7A":"#3A3D45",ic=over?"#FF9A9A":"#C9CDD4";
     s+=`<g transform="translate(120,40)"><circle r="11" fill="${bg}" stroke="${bd}" stroke-width="1.2"/><g transform="translate(-6.5,-6.5) scale(0.0508)" fill="${ic}">${phInner(sj)}</g></g>`;}
