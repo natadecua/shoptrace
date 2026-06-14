@@ -96,6 +96,39 @@ Rules:
 - Plates are always the physical artifact: light `#E9E9EC` ground, near-black
   ink, mono. They read as a license plate, not a UI tag.
 
+### Light mode (reference: "verve")
+
+The dark cockpit above is the priority. Light mode follows the **verve** real
+estate dashboard as its reference: green-led, airy, soft pastel cards on
+near-white surfaces, generous whitespace. Reference screenshots live in
+`design/references/verve/`.
+
+**Light palette (verve brand):**
+
+| Token | Hex | Use |
+|---|---|---|
+| `NORDIC` | `#19322F` | Darkest green: headings, primary text, logo. |
+| `MOSQUE` | `#006655` | Primary green: prices, identity, selected/active. |
+| `HINT_OF_GREEN` | `#D9ECC8` | Pale green card fill (e.g. "Completed Deals"). |
+| `CLEAR_DAY` | `#EEF6F6` | Near-white page background. |
+| (pale blue) | `~#D6EAF2` | Second pastel stat card (e.g. "Total Revenue"). |
+| (white) | `#FFFFFF` | Primary cards / panels. |
+
+**Notes for the port:**
+- **Type stays Geist** (the locked face). verve uses SF Pro Display; Geist is the
+  Apple-adjacent equivalent, so the editorial feel carries over. No font change.
+- **Surfaces:** white cards on a `CLEAR_DAY` page, soft rounded corners, gentle
+  shadows allowed here (light mode reads flatter, so a light soft shadow is the
+  separation device instead of dark-mode hairlines).
+- **Stat cards:** the pale-green / pale-blue pairing (with an inline progress bar
+  + percent) maps directly onto our Completed Deals / Total Revenue pattern.
+- **Open reconciliation (accent):** dark mode locks **orange** as the single CTA
+  accent; verve is **green**-led with the occasional coral nav highlight.
+  Recommendation: keep **orange** as the one cross-mode CTA accent for brand
+  continuity, and use **MOSQUE green** as light mode's identity/secondary
+  (prices, headings, active states). Confirm before building light mode so we
+  do not end up with two competing accents.
+
 ---
 
 ## 4. Typography
