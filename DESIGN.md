@@ -1,4 +1,4 @@
-# ShopTrace — Design System Guide
+# ShopTrace · Design System Guide
 
 The locked visual language for the ShopTrace advisor cockpit and customer-facing
 surfaces. This is the reference the production Next.js app ports from. The
@@ -7,6 +7,12 @@ synthesis); the shared system lives in `design/prototype/components.js`.
 
 > **Status:** Locked. Changes to tokens, type, radius, depth, or the accent rule
 > are design decisions, not ad-hoc tweaks. Update this file when they change.
+
+**Design skills** (vendored in `.agents/skills/`, tracked in `skills-lock.json`):
+`emil-design-eng` (animation + UI-polish philosophy), `design-taste-frontend`
+(the anti-slop review), plus the `taste-skill` set (`high-end-visual-design`,
+`minimalist-ui`, `redesign-existing-projects`, `image-to-code`, etc.). Run the
+relevant one when building or reviewing a frontend surface. See §7 for motion.
 
 ---
 
@@ -148,7 +154,40 @@ level (24 card → 16/14 inner → 12 control).
 
 ---
 
-## 7. The shop floor (signature)
+## 7. Motion & animation
+
+Motion is part of the premium feel, not decoration. The static prototype has
+none; this is the spec for the Next.js port.
+
+**Reference libraries (installed / bookmarked):**
+- **[designspells.com](https://designspells.com/)** — the pattern library. When a
+  surface needs a micro-interaction (a status flip, a card expand, a toast, a
+  drag handle, a number tick), pull the closest "spell" as the reference for
+  timing and feel rather than inventing one.
+- **`emil-design-eng` skill** (`.agents/skills/emil-design-eng`, from
+  [animations.dev](https://animations.dev/)) — the philosophy: when to animate,
+  easing, spring vs duration, perceived performance, the invisible details.
+
+**Principles (the lock):**
+- **Animate state changes, not arrivals.** A job moving Diagnose → Estimate, a
+  bay going Ready, an ETA slipping to overdue: these earn motion. Page loads do
+  not need entrance choreography.
+- **Fast and physical.** UI transitions 150–250ms; springs over linear easing for
+  anything that moves spatially (cards, the inspector sliding in, a vehicle
+  taking a bay). Use `ease-out` for enters, `ease-in` for exits.
+- **Calm, not busy.** One thing moves at a time in a given region. No looping
+  ambient animation, no decorative parallax. The floor is calm until something
+  actually changes.
+- **The accent earns the loudest motion.** The orange CTA may get a subtle press
+  spring; a real alarm (new overdue) may pulse once. Nothing else competes.
+- **Respect `prefers-reduced-motion`** — fall back to instant state changes.
+- Motion never invents data and never delays the operator: progress bars and ETA
+  changes animate to the real value, they do not fake-count for show.
+
+Catalogue specific chosen "spells" here as they are picked, so motion stays a
+small curated set, not a grab-bag.
+
+## 8. The shop floor (signature)
 
 - Borderless and seamless: one radial-gradient surface
   (`radial-gradient(130% 90% at 50% 0%,#1B1B1F,#101012 70%)`), bays as a 3-col
@@ -179,7 +218,7 @@ vehicle art and motion are out of scope for a static prototype.
 
 ---
 
-## 8. Iconography
+## 9. Iconography
 
 - **Phosphor only** (`@phosphor-icons/core`, raw SVG, `fill="currentColor"`).
   Bold weight auto-used at ≤13px for legibility; regular above.
@@ -190,7 +229,7 @@ vehicle art and motion are out of scope for a static prototype.
 
 ---
 
-## 9. Components
+## 10. Components
 
 - **Need card** (spine exception): reason + risk figure in severity color, plate
   + vehicle, then orange primary (Nudge/Update) + ghost Call. The only place
@@ -210,7 +249,7 @@ vehicle art and motion are out of scope for a static prototype.
 
 ---
 
-## 10. Copy & numbers
+## 11. Copy & numbers
 
 - **Zero em-dashes and en-dashes (— –). Non-negotiable**, especially in
   customer-facing message copy. Use a period, comma, or restructure. The middot
@@ -223,7 +262,7 @@ vehicle art and motion are out of scope for a static prototype.
 
 ---
 
-## 11. Anti-slop locks (audit checklist)
+## 12. Anti-slop locks (audit checklist)
 
 Run before shipping any new screen. Derived from the `design-taste-frontend`
 review; the universally-applicable rules apply even though that skill scopes
@@ -243,7 +282,7 @@ itself to landing pages.
 
 ---
 
-## 12. Run the prototype
+## 13. Run the prototype
 
 ```bash
 cd design/prototype
