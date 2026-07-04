@@ -42,7 +42,7 @@ borrowed information density.** Keep the calm surface; keep all the features.
 Three-zone working row under a header, over a bottom utility bar:
 
 ```
-┌ header: "Shop Overview" + search + New RO (orange) ───────────────┐
+┌ header: "Shop Overview" + search + New RO (champagne) ────────────┐
 ├ spine 322px │  open floor (hero, flex)  │ inspector 354px ────────┤
 └ bottom utility bar: status pill · nav cluster · revenue pill ─────┘
 ```
@@ -61,73 +61,74 @@ Outer page padding 30px; inter-zone gap 18px.
 
 ## 3. Color
 
-Dark-first. One warm accent for identity, one orange for action, semantic colors
-for status only.
+**Ink & Champagne.** A near-monochrome charcoal/ink foundation with exactly one
+warm-metal accent (champagne) and one scarce alarm. No competing hues. This is
+what makes it read elevated and minimal rather than busy. (This replaces the
+earlier Rivian gold + orange-CTA + status-pastels scheme.)
+
+Dark-first neutral foundation:
 
 | Token | Hex | Use |
 |---|---|---|
-| `BG` | `#141416` | Page background |
-| `CARD` | `#222226` | Primary card fill (Rivian soft charcoal) |
-| `CARD2` | `#2A2A2F` | Raised inner surface (need cards, link card) |
-| `RAISE` | `#34343A` | Secondary button fill |
-| `INK` | `#F4F3F0` | Primary text (warm white) |
-| `SOFT` | `#9B9B9F` | Secondary text |
-| `FAINT` | `#67676B` | Labels, tertiary |
-| `HAIR` | `rgba(255,255,255,0.055)` | Hairline dividers |
+| `BG` | `#1A1A1C` | Page background (warm ink) |
+| `CARD` | `#232326` | Primary card fill |
+| `CARD2` | `#2B2B2E` | Raised inner surface (need cards, link card) |
+| `RAISE` | `#343438` | Secondary button fill |
+| `INK` | `#F2F1EC` | Primary text (warm white) |
+| `SOFT` | `#8E8E88` | Secondary text **and neutral status** |
+| `FAINT` | `#62625E` | Labels, tertiary |
+| `HAIR` | `rgba(255,255,255,0.05)` | Hairline dividers |
 
-**Accents — the lock:**
+**Accent — the lock (one color):**
 
 | Token | Hex | Meaning |
 |---|---|---|
-| `ORANGE` | `#F54E00` | **The single CTA accent.** Primary action only: New RO, Nudge/Update, Update customer. Never decorative. |
-| `GOLD` | `#E7B24A` | Rivian warm identity: waiting, idle, long-wait, attention. |
-| `GREEN` | `#86C58C` | Ready / on-track / done. |
-| `BLUE` | `#86B7D8` | Diagnostic / in-flight stage. |
-| `LAV` | `#B2B4E0` | In progress. |
-| `RED` | `#E96A66` | **Alarm only:** overdue, blocked, unpaid. Scarce. |
+| `CHAMP` | `#C9A86A` | **The single accent.** Carries identity, the primary CTA, the active/selected bay, completed steps, progress fills, prices, and attention (ready/waiting). It repeats freely; that repetition *is* the minimalism. |
+| `CHAMPSOFT` | `#DAC093` | Lighter champagne for hover / large soft fills. |
+| `ALERT` | `#C46B57` | **Alarm only:** overdue, blocked, unpaid. The only other color on screen. Scarce. |
 
 Rules:
-- **Orange is scarce.** One primary CTA per context, max. If two oranges compete
-  on screen, one is wrong.
-- **Red is alarm, not decoration.** A red car tint, a red OVERDUE pill, a red
-  risk figure — only when something is genuinely wrong.
-- Status colors render as full-saturation text on a faint `${c}1c`–`${c}28`
-  fill. No solid loud chips.
+- **One accent, repeated.** Champagne is the whole palette. Do not reintroduce a
+  second hue (green/blue/orange) for variety; variety comes from neutral tonal
+  weight, not new colors.
+- **CTA = champagne fill, dark ink text** (`color:${BG}`), never white. Champagne
+  is light; white text on it fails contrast.
+- **Status by weight, not hue.** Running states (In Progress, Diagnostic) are
+  **neutral grey** (`SOFT`) meaning "nothing needed." Ready / Waiting are
+  **champagne** meaning "needs your eye." Overdue / blocked are **ALERT**. Three
+  signals, full stop.
+- **Alert is scarce.** Terracotta only for true alarm: the OVERDUE pill, a
+  blocked-approval risk figure, an overdue vehicle tint.
+- **Vehicles stay neutral** grey; overdue tints them toward alert.
 - Plates are always the physical artifact: light `#E9E9EC` ground, near-black
   ink, mono. They read as a license plate, not a UI tag.
 
-### Light mode (reference: "verve")
+### Light mode
 
-The dark cockpit above is the priority. Light mode follows the **verve** real
-estate dashboard as its reference: green-led, airy, soft pastel cards on
-near-white surfaces, generous whitespace. Reference screenshots live in
-`design/references/verve/`.
-
-**Light palette (verve brand):**
+Light mode carries the same **Ink & Champagne** identity (green is dropped). The
+**verve** real estate dashboard remains the reference for *layout, airiness, soft
+cards, and spacing* only; its green palette is overridden. Reference screenshots
+live in `design/references/verve/`.
 
 | Token | Hex | Use |
 |---|---|---|
-| `NORDIC` | `#19322F` | Darkest green: headings, primary text, logo. |
-| `MOSQUE` | `#006655` | Primary green: prices, identity, selected/active. |
-| `HINT_OF_GREEN` | `#D9ECC8` | Pale green card fill (e.g. "Completed Deals"). |
-| `CLEAR_DAY` | `#EEF6F6` | Near-white page background. |
-| (pale blue) | `~#D6EAF2` | Second pastel stat card (e.g. "Total Revenue"). |
-| (white) | `#FFFFFF` | Primary cards / panels. |
+| `BG` (light) | `#F5F4F0` | Off-white page background |
+| `CARD` (light) | `#FFFFFF` | Cards / panels |
+| `INK` (light) | `#14140F` | Primary text (warm near-black) |
+| `SOFT` (light) | `#8C8C86` | Secondary text / neutral status |
+| `CHAMP` | `#C9A86A` | Accent fills (CTA, active, progress). |
+| `CHAMP_INK` | `#A8842F` | Deeper champagne for *small text/prices* on white (the `#C9A86A` fill tone fails small-text contrast on light). |
+| `ALERT` | `#C46B57` | Alarm only. |
 
-**Notes for the port:**
-- **Type stays Geist** (the locked face). verve uses SF Pro Display; Geist is the
-  Apple-adjacent equivalent, so the editorial feel carries over. No font change.
-- **Surfaces:** white cards on a `CLEAR_DAY` page, soft rounded corners, gentle
-  shadows allowed here (light mode reads flatter, so a light soft shadow is the
-  separation device instead of dark-mode hairlines).
-- **Stat cards:** the pale-green / pale-blue pairing (with an inline progress bar
-  + percent) maps directly onto our Completed Deals / Total Revenue pattern.
-- **Open reconciliation (accent):** dark mode locks **orange** as the single CTA
-  accent; verve is **green**-led with the occasional coral nav highlight.
-  Recommendation: keep **orange** as the one cross-mode CTA accent for brand
-  continuity, and use **MOSQUE green** as light mode's identity/secondary
-  (prices, headings, active states). Confirm before building light mode so we
-  do not end up with two competing accents.
+Light-mode notes:
+- **Type stays Geist.** verve uses SF Pro Display; Geist is the Apple-adjacent
+  equivalent, so the editorial feel carries over. No font change.
+- **Surfaces:** white cards on the off-white page, soft rounded corners; a gentle
+  soft shadow is the separation device here (vs the dark-mode hairline rule).
+- **Stat cards:** verve's paired pastel cards map onto our Completed Deals /
+  Total Revenue pattern, but tinted as faint champagne / neutral, not green/blue.
+- **Accent question resolved:** champagne is the single cross-mode accent; green
+  is not used. Use `CHAMP_INK` where champagne sits as small text on white.
 
 ---
 
@@ -211,7 +212,7 @@ none; this is the spec for the Next.js port.
 - **Calm, not busy.** One thing moves at a time in a given region. No looping
   ambient animation, no decorative parallax. The floor is calm until something
   actually changes.
-- **The accent earns the loudest motion.** The orange CTA may get a subtle press
+- **The accent earns the loudest motion.** The champagne CTA may get a subtle press
   spring; a real alarm (new overdue) may pulse once. Nothing else competes.
 - **Respect `prefers-reduced-motion`** — fall back to instant state changes.
 - Motion never invents data and never delays the operator: progress bars and ETA
@@ -231,7 +232,7 @@ small curated set, not a grab-bag.
   4% opacity behind everything.
 - Selected bay gets a `1.5px` white-45% ring. Overdue bays get a radial red wash
   behind the vehicle.
-- Empty bay: faint lift at 50% opacity, "Open · idle" gold label, and a single
+- Empty bay: faint lift at 50% opacity, "Open · idle" champagne label, and a single
   glass "Assign" CTA.
 
 ### Iso vehicle + lift system
@@ -258,25 +259,25 @@ vehicle art and motion are out of scope for a static prototype.
 - **No hand-rolled icon SVGs.** (The iso vehicle/lift are illustrations, not
   icons — they are the one sanctioned exception.)
 - Icons are monochrome and inherit text color; they never carry the accent unless
-  they sit inside the one orange CTA.
+  they sit inside the one champagne CTA.
 
 ---
 
 ## 10. Components
 
 - **Need card** (spine exception): reason + risk figure in severity color, plate
-  + vehicle, then orange primary (Nudge/Update) + ghost Call. The only place
-  orange appears in the spine.
-- **Queue row:** position badge (gold if wait ≥20m), vehicle + service, wait
+  + vehicle, then champagne primary (Nudge/Update) + ghost Call. The only place
+  the accent appears in the spine.
+- **Queue row:** position badge (champagne if wait ≥20m), vehicle + service, wait
   time, and a green "→ Bay NN" hint on the next-up row. No plates in the spine —
   they live in the inspector on tap (avoids truncation).
 - **Status pill** (`rivPill`): status text + a small live-status dot, on a faint
   tint. The dot is a *live-state indicator*, permitted here; it is never used as
   ornament elsewhere.
-- **Inspector:** stage stepper (done=green, current=blue, todo=faint), label +
+- **Inspector:** stage stepper (done=champagne, current=ink, todo=faint), label +
   value readouts on hairlines, a customer-link card with view state, a
   remaining-checklist with empty radio circles, then the NBA message preview in
-  quotes above the orange "Update customer" CTA + Call / Move ETA.
+  quotes above the champagne "Update customer" CTA + Call / Move ETA.
 - **Bottom utility bar:** left status pill, centered icon nav cluster (active tile
   raised), right revenue pill. Numbers in mono.
 
@@ -302,7 +303,8 @@ review; the universally-applicable rules apply even though that skill scopes
 itself to landing pages.
 
 - [ ] **No em/en dashes** anywhere rendered (run `grep` for `—` and `–`).
-- [ ] **One orange CTA** per context; orange never decorative.
+- [ ] **One champagne accent**, repeated; no second hue reintroduced. CTA is
+      champagne fill + dark ink text.
 - [ ] **Red only for true alarm** (overdue/blocked/unpaid).
 - [ ] **Radius** rounds to the §5 scale; no invented intermediate values.
 - [ ] **One drop-shadow only** (the vehicle product-shadow); all UI depth is

@@ -1,12 +1,14 @@
 const M=require("./components.js");
 const {fs,path,icon,I,lift,insp}=M;
 
-// ---- Rivian card skin + Reload editorial premium ----
-const BG="#141416",CARD="#222226",CARD2="#2A2A2F",RAISE="#34343A",INK="#F4F3F0",SOFT="#9B9B9F",FAINT="#67676B",HAIR="rgba(255,255,255,0.055)";
-const GOLD="#E7B24A",ORANGE="#F54E00",GREEN="#86C58C",BLUE="#86B7D8",LAV="#B2B4E0",RED="#E96A66";
+// ---- Ink & Champagne: near-monochrome base + one warm-metal accent (elevated minimal) ----
+const BG="#1A1A1C",CARD="#232326",CARD2="#2B2B2E",RAISE="#343438",INK="#F2F1EC",SOFT="#8E8E88",FAINT="#62625E",HAIR="rgba(255,255,255,0.05)";
+const CHAMP="#C9A86A",CHAMPSOFT="#DAC093",ALERT="#C46B57";
+// one accent everywhere meaningful; status reads as neutral vs accent vs alarm, not a rainbow
+const GOLD=CHAMP,ORANGE=CHAMP,GREEN=CHAMP,BLUE=SOFT,LAV=SOFT,RED=ALERT;
 const card=(r=24,x="")=>`border-radius:${r}px;background:${CARD};${x}`;
 const MONO="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums";
-const sc=s=>({"In Progress":LAV,"Diagnostic":BLUE,"Ready":GREEN,"Waiting":GOLD}[s]||SOFT);
+const sc=s=>({"In Progress":SOFT,"Diagnostic":SOFT,"Ready":CHAMP,"Waiting":CHAMP}[s]||SOFT);
 
 const bays=[
  {id:"01",type:"sedan",plate:"NBC 4521",vehicle:"Toyota Vios",svc:"oil",state:"Oil & filter",status:"In Progress",mech:"Mike R.",eta:"on time",pct:46},
@@ -35,7 +37,7 @@ function label(t){return `<span style="font-size:11px;font-weight:600;letter-spa
 function needCard(n){return `<div style="${card(16)};padding:16px;background:${CARD2}">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px"><span style="font-size:11px;font-weight:600;color:${n.sev}">${n.reason}</span><span style="${MONO};font-size:14px;font-weight:600;color:${n.sev}">${n.risk}</span></div>
   <div style="display:flex;align-items:center;gap:7px;margin-bottom:14px">${plate(n.plate)}<span style="font-size:14px;font-weight:600">${n.vehicle}</span></div>
-  <div style="display:flex;gap:8px"><button style="flex:1;border-radius:12px;height:42px;font-size:13px;font-weight:600;color:#fff;background:${ORANGE};border:none">${n.pri}</button><button style="flex:1;border-radius:12px;height:42px;font-size:13px;font-weight:500;color:${INK};background:${RAISE};border:none">Call</button></div></div>`;}
+  <div style="display:flex;gap:8px"><button style="flex:1;border-radius:12px;height:42px;font-size:13px;font-weight:600;color:${BG};background:${CHAMP};border:none">${n.pri}</button><button style="flex:1;border-radius:12px;height:42px;font-size:13px;font-weight:500;color:${INK};background:${RAISE};border:none">Call</button></div></div>`;}
 function qRow(q){const long=parseInt(q.wait)>=20;return `<div style="display:flex;align-items:center;gap:13px;padding:11px 2px"><span style="display:grid;width:30px;height:30px;flex-shrink:0;place-items:center;border-radius:9px;${MONO};font-size:12px;font-weight:600;color:${long?GOLD:SOFT};background:${(long?GOLD:SOFT)}18">${q.pos}</span><div style="min-width:0;flex:1"><div style="font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${q.vehicle}</div><div style="font-size:11.5px;color:${SOFT};margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${q.svc}</div></div><div style="text-align:right;flex-shrink:0"><div style="${MONO};font-size:12px;font-weight:600;color:${long?GOLD:SOFT}">${q.wait}</div>${q.next?`<div style="font-size:10px;font-weight:600;color:${GREEN};margin-top:2px">→ Bay 06</div>`:""}</div></div>`;}
 function pillRow(ic,t,v,c){return `<div style="display:flex;align-items:center;gap:11px;padding:11px 2px"><span style="display:grid;width:30px;height:30px;flex-shrink:0;place-items:center;border-radius:9px;background:${c}18;color:${c}">${icon(ic,"h-4 w-4")}</span><span style="flex:1;font-size:13.5px;font-weight:500">${t}</span><span style="font-size:12px;color:${SOFT};${MONO}">${v}</span></div>`;}
 
@@ -62,7 +64,7 @@ function bay(b){
         <div style="display:flex;align-items:center;gap:6px"><span style="display:grid;width:21px;height:21px;place-items:center;border-radius:50%;font-size:10px;font-weight:700;background:${c}28;color:${INK}">${b.mech[0]}</span><span style="font-size:11.5px;color:${SOFT}">${b.mech.split(" ")[0]}</span>${b.waiting?`<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:${GOLD}">${icon(I.armchair,"h-3 w-3")}Lobby</span>`:""}</div>
         <span style="${MONO};font-size:11.5px;font-weight:600;color:${eC}">${b.eta}</span>
       </div>
-      <div style="margin-top:8px;height:4px;border-radius:2px;background:rgba(255,255,255,0.1);overflow:hidden"><div style="height:100%;width:${b.pct}%;border-radius:2px;background:${b.over?RED:c}"></div></div>
+      <div style="margin-top:8px;height:4px;border-radius:2px;background:rgba(255,255,255,0.1);overflow:hidden"><div style="height:100%;width:${b.pct}%;border-radius:2px;background:${b.over?ALERT:CHAMP}"></div></div>
     </div>
   </div>`;
 }
@@ -74,7 +76,7 @@ function inspector(){const i=insp,done=i.steps.filter(s=>s.done).length,tot=i.st
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">${label("Bay 03")}<span style="display:grid;width:28px;height:28px;place-items:center;border-radius:9px;color:${SOFT};background:${CARD2}">${icon(I.x,"h-4 w-4")}</span></div>
     <div style="display:flex;align-items:center;gap:9px;margin-bottom:5px">${plate(i.plate,true)}<span style="font-size:23px;font-weight:500;letter-spacing:-0.02em">${i.vehicle}</span></div>
     <div style="font-size:13px;color:${SOFT};margin-bottom:16px">${i.mech} · Bay ${i.bay}</div>
-    <div style="display:flex;gap:4px;margin-bottom:9px">${i.stages.map((s,ix)=>`<div style="flex:1;height:4px;border-radius:2px;background:${ix<i.stageIdx?GREEN:ix===i.stageIdx?BLUE:"rgba(255,255,255,0.1)"}"></div>`).join("")}</div>
+    <div style="display:flex;gap:4px;margin-bottom:9px">${i.stages.map((s,ix)=>`<div style="flex:1;height:4px;border-radius:2px;background:${ix<i.stageIdx?CHAMP:ix===i.stageIdx?INK:"rgba(255,255,255,0.12)"}"></div>`).join("")}</div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px"><span style="font-size:13px;font-weight:500">${i.stages[i.stageIdx]}<span style="color:${FAINT}"> → ${i.stages[i.stageIdx+1]}</span></span><span style="border-radius:999px;padding:3px 10px;font-size:10px;font-weight:700;letter-spacing:0.05em;color:#fff;background:${RED}">OVERDUE +15</span></div>
     ${readout("Promised","11:00a")}${readout("ETA","11:15a · +15 late",GOLD)}${readout("Parts","On hand",GREEN)}${readout("Customer","Waiting in lobby",GOLD)}
     <div style="display:flex;align-items:center;gap:10px;margin:16px 0;border-radius:14px;padding:12px 14px;background:${CARD2}"><span style="color:${BLUE}">${icon(I.link,"h-5 w-5")}</span><div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600">Customer link</div><div style="font-size:11px;color:${SOFT}">${i.custView}</div></div><button style="border-radius:10px;padding:0 12px;height:32px;font-size:12px;font-weight:500;color:${INK};background:${RAISE};border:none">Preview</button></div>
@@ -82,7 +84,7 @@ function inspector(){const i=insp,done=i.steps.filter(s=>s.done).length,tot=i.st
     <div style="font-size:10px;font-weight:600;color:${GOLD};letter-spacing:0.08em;text-transform:uppercase;margin-bottom:7px">${rem.length} remaining</div>
     ${rem.map(s=>`<div style="display:flex;align-items:center;gap:11px;padding:5px 0"><span style="width:15px;height:15px;flex-shrink:0;border-radius:50%;border:1.5px solid rgba(255,255,255,0.22)"></span><span style="font-size:13px">${s.t}</span></div>`).join("")}
     <div style="margin-top:20px"><div style="font-size:13px;color:${SOFT};line-height:1.5;margin-bottom:12px">"${i.nbaPreview}"</div>
-      <button style="display:flex;width:100%;align-items:center;justify-content:center;gap:9px;border-radius:16px;height:54px;font-size:16px;font-weight:600;color:#fff;background:${ORANGE};border:none">${icon(I.msg,"h-5 w-5")}${i.nba}</button>
+      <button style="display:flex;width:100%;align-items:center;justify-content:center;gap:9px;border-radius:16px;height:54px;font-size:16px;font-weight:600;color:${BG};background:${CHAMP};border:none">${icon(I.msg,"h-5 w-5")}${i.nba}</button>
       <div style="display:flex;gap:10px;margin-top:11px"><button style="flex:1;border-radius:14px;height:46px;font-size:13px;font-weight:500;color:${INK};background:${CARD2};border:none">Call</button><button style="flex:1;border-radius:14px;height:46px;font-size:13px;font-weight:500;color:${INK};background:${CARD2};border:none">Move ETA</button></div>
     </div></div>`;}
 
@@ -102,7 +104,7 @@ const body=`<div style="min-height:100vh;display:flex;flex-direction:column">
     <div><h1 style="font-size:34px;font-weight:500;margin:0;line-height:1">Shop Overview</h1><div style="font-size:14px;color:${SOFT};margin-top:9px">Southside Auto · Sunday, June 7 · 2:30 PM</div></div>
     <div style="display:flex;align-items:center;gap:12px">
       <div style="display:flex;align-items:center;width:250px;gap:10px;border-radius:15px;background:${CARD};padding:0 16px;height:48px;color:${SOFT}">${icon(I.search,"h-5 w-5")}<span style="font-size:13px">Search plate, RO, customer…</span></div>
-      <button style="display:inline-flex;align-items:center;gap:8px;border-radius:15px;height:48px;padding:0 20px;font-size:14px;font-weight:600;color:#fff;background:${ORANGE};border:none">${icon(I.plus,"h-4 w-4")}New RO</button>
+      <button style="display:inline-flex;align-items:center;gap:8px;border-radius:15px;height:48px;padding:0 20px;font-size:14px;font-weight:600;color:${BG};background:${CHAMP};border:none">${icon(I.plus,"h-4 w-4")}New RO</button>
     </div>
   </header>
 
